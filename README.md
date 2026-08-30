@@ -14,8 +14,9 @@
 <br>
 
 </div>
-<br>
+
 ## What is Tash?
+
 Tash is a testing framework that is [POSIX-compliant](https://en.wikipedia.org/wiki/POSIX) and has zero dependencies. Its main goal is to
 be runnable on every system that has a POSIX shell<sub>(Bash, Dash, Zsh, Ksh, ...)</sub>. 
 
