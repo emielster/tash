@@ -13,6 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://gnu.org>.
 
+# NOTE: Tash is meant to be POSIX-compliant and dependency-less, which means
+# that it should work with ANY POSIX-compliant shell without installing ANY external dependencies.
+# However, this also has a big disadvantage: because we can't use Bash extensions and we can't
+# use any other non-POSIX command, we miss out on a lot of (performance) opportunities (for example, we have to use
+# a string-based array instead of a normal Bash-array, we cannot have sub-second precision timing, ...).
+#
+# In a future version of Tash, I might develop an option called TASH_USE_BASH_EXTENSIONS that when set to 1,
+# enables us to benefit of Bash's extensions.
+
 # Checks if a string is valid for Tash (item names, ...)
 tash__is_valid_name() {
 	name=$1
@@ -395,6 +404,8 @@ value() {
 # end
 #
 # ```
+TASH_TMP_STDOUT=""
+TASH_TMP_STDERR=""
 run() {
 	if [ $# -eq 0 ]; then
 		tash__error "run: expected atleast one argument (command...)"
@@ -417,9 +428,7 @@ run() {
 
 	#TODO: There might be some better way to do this.
 	# This creates two temporary files on each run command, which is, slow.
-	tmp_stdout=$(mktemp)
-	tmp_stderr=$(mktemp)
-	"$@" 1>"$tmp_stdout" 2>"$tmp_stderr" # Temporarily move 1 (stdout) to a temporary file made with mktemp, the same for
+	"$@" 1>"$TASH_TMP_STDOUT" 2>"$TASH_TMP_STDERR" # Temporarily move 1 (stdout) to a temporary file made with mktemp, the same for
 	# with 2 (stderr)
 
 	code=$?
@@ -427,12 +436,11 @@ run() {
 	value "$code"
 	end
 	item "stdout"
-	value "$(cat "$tmp_stdout")"
+	value "$(cat "$TASH_TMP_STDOUT")"
 	end
 	item "stderr"
-	value "$(cat "$tmp_stderr")"
+	value "$(cat "$TASH_TMP_STDERR")"
 	end
-	rm -f "$tmp_stdout" "$tmp_stderr"
 
 }
 
@@ -589,6 +597,11 @@ tash_init() {
 
 	done
 
+	TASH_TMP_STDOUT=$(mktemp)
+	TASH_TMP_STDERR=$(mktemp)
+
+	trap 'rm -rf "$TASH_TMP_STDOUR" "$TASH_TMP_STDERR"' EXIT # Make sure they get cleaned up
+	TASH_START=$(date +%s)
 }
 
 # Use this to end Tash, after you are done with it.
@@ -611,7 +624,9 @@ tash_end() {
 		exit 0
 	fi
 
-	tash__results "${TASH_COUNT_SUCCEEDED} succeeded, ${TASH_COUNT_FAILED} failed, ${TASH_COUNT_IGNORED} ignored"
+	TASH_END=$(date +%s)
+	elapsed=$((TASH_END - TASH_START))
+	tash__results "${TASH_COUNT_SUCCEEDED} succeeded, ${TASH_COUNT_FAILED} failed, ${TASH_COUNT_IGNORED} ignored (took ${elapsed}s)"
 
 	if [ "$TASH_MODE" = "inspect" ]; then
 		for path in $TASH_ITEM_PATHS; do

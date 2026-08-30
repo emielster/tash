@@ -1,6 +1,6 @@
 #!/bin/sh
 
-. ./tash.sh
+. ../src/tash.sh
 tash_init "$@"
 
 item "printf"
