@@ -446,7 +446,7 @@ run() {
 
 # Use this to compare an item relative to the scope, with a value. Fails the test if this the comparison
 # is not true. This turns the current scope into a test, if not already.
-# Mimics POSIX test(1), plus :contains for substrings
+# Mimics POSIX test(1), plus contains for substrings
 #	+-----operator-----+--------description------+
 #	| = / !=           | string (in)equality	 |
 #	| -eq -ne          | numeric (in)equality    |
