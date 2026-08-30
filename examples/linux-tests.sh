@@ -33,7 +33,7 @@ end
 
 item "cat"
 run printf "hello\nworld\n"
-assert stdout = "hello\nworld"
+assert stdout = "$(tash_fmt "hello\nworld")"
 assert -z stderr
 assert exitcode -eq 0
 end
@@ -54,7 +54,7 @@ end
 
 item "sort"
 run sh -c 'printf "zebra\napple\nbanana\n" | sort'
-assert stdout = "apple\nbanana\nzebra"
+assert stdout = "$(tash_fmt "apple\nbanana\nzebra")"
 assert exitcode -eq 0
 end
 

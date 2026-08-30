@@ -32,6 +32,26 @@ tash__is_valid_name() {
 	esac
 }
 
+# A POSIX alternative to mktemp
+tash__mk_temp() {
+	dir=${TMPDIR:-/tmp}
+	i=0
+
+	while true; do
+		file="$dir/tash-${$}-${i}"
+
+		if (
+			set -C     # Sets noclobber on
+			: >"$file" # Creates $file
+		) 2>/dev/null; then
+			printf "%s\n" "$file"
+			return 0
+		fi
+
+		i=$((i + 1))
+	done
+}
+
 # Checks if a scope is an descendant of an ancestor
 tash__scope_is_descendant_of() {
 	scope=$1
@@ -274,10 +294,11 @@ TASH_E_RUN_ARGUMENT_COUNT=6
 TASH_E_ASSERT_ARGUMENT_COUNT=7
 TASH_E_ASSERT_INVALID_SCOPE=8
 TASH_E_ASSERT_UNKNOWN_OPERATOR=9
-TASH_E_TASH_INIT_UNKNOWN_ARGUMENT=10
-TASH_E_TASH_INIT_ARGUMENT_COUNT=11
-TASH_E_TASH_END_INVALID_SCOPE=12
-TASH_E_TASH_END_TESTS_FAILED=13
+TASH_E_TASH_FMT_ARGUMENT_COUNT=10
+TASH_E_TASH_INIT_UNKNOWN_ARGUMENT=11
+TASH_E_TASH_INIT_ARGUMENT_COUNT=12
+TASH_E_TASH_END_INVALID_SCOPE=13
+TASH_E_TASH_END_TESTS_FAILED=14
 # In Bash, you would use an array, but since Tash should work with **any**
 # POSIX-compliant shell, we can't use any of the Bash extensions, including arrays.
 TASH_SCOPE="tests" # Start at the tests scope. Treat this as the global scope for everything.
@@ -541,6 +562,34 @@ assert() {
 
 }
 
+# Use this to format and interpret \n, \t, ... inside a string
+# Foreshadowing: it is just printf but different.
+# This is because POSIX shell interprets this:
+# ```sh
+# #!/bin/sh
+# # --snip--
+#	assert stdout = "hello\nworld"
+# # --snip--
+# ```
+# Literally as "hello\nworld" and not "hello
+# world"
+# printf fixes this, but it is a bit weird and unexplaining.
+# Therefore, Tash provides a wrapper around it.
+# Example:
+# ```sh
+# #!/bin/sh
+# # --snip--
+#	assert stdout = "$(tash_fmt "hello\nworld")" # launch it in a subshell
+# # --snip--
+# ```
+tash_fmt() {
+	if [ $# -ne 1 ]; then
+		tash__error "tash_fmt: expected exactly one argument (string)"
+		tash__terminate "$TASH_E_TASH_FMT_ARGUMENT_COUNT"
+	fi
+	printf '%b' "$1"
+}
+
 # Use this to initialize Tash, preferably with all the arguments of your program passed into it.
 # Example:
 # ```sh
@@ -597,10 +646,10 @@ tash_init() {
 
 	done
 
-	TASH_TMP_STDOUT=$(mktemp)
-	TASH_TMP_STDERR=$(mktemp)
+	TASH_TMP_STDOUT=$(tash__mk_temp)
+	TASH_TMP_STDERR=$(tash__mk_temp)
 
-	trap 'rm -rf "$TASH_TMP_STDOUR" "$TASH_TMP_STDERR"' EXIT # Make sure they get cleaned up
+	trap 'rm -f "$TASH_TMP_STDOUT" "$TASH_TMP_STDERR"' 0 # Make sure they get cleaned up
 	TASH_START=$(date +%s)
 }
 
@@ -634,7 +683,7 @@ tash_end() {
 				case " $TASH_VALUE_PATHS " in
 				*" $path "*)
 					value=$(tash__get $path)
-					tash__window "inspection: $path" "${value:-(empty)}"
+					tash__window "inspection: $path" "${value:-"(empty)"}"
 					;;
 				esac
 			fi
@@ -648,8 +697,8 @@ tash_end() {
 			stderr=$(tash__get "${run_scope}::stderr")
 			if [ -n "$stdout" ] || [ -n "$stderr" ]; then
 				tash__window "$failpath" \
-					"$(printf "stdout: %s" "${stdout:-(empty)}")" \
-					"$(printf "stderr: %s" "${stderr:-(empty)}")"
+					"$(printf "stdout: %s" "${stdout:-"(empty)"}")" \
+					"$(printf "stderr: %s" "${stderr:-"(empty)"}")"
 				printf "\n"
 			fi
 		done
