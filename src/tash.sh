@@ -291,8 +291,8 @@ tash__failure() {
 # in Tash's documentation directly from the exit code.
 tash__terminate() {
 	code="$1"
-	printf "tash ${TASH_BOLD_RED}terminated${TASH_COLOR_RESET} with error code ${TASH_BOLD_WHITE}E%03d${TASH_COLOR_RESET}\n" "$code"
-	printf "info: visit ${TASH_BOLD_WHITE}https://tash.dev/error/E%03d${TASH_COLOR_RESET} for more information\n" "$code"
+	printf "tash ${TASH_BOLD_RED}terminated${TASH_COLOR_RESET} with error code ${TASH_BOLD_WHITE}E%03d${TASH_COLOR_RESET}\n" "$code" >&2
+	printf "info: visit ${TASH_BOLD_WHITE}https://tash.dev/error/E%03d${TASH_COLOR_RESET} for more information\n" "$code" >&2
 
 	exit "$code"
 }

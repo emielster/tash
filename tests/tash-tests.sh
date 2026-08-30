@@ -249,19 +249,75 @@ item "internal"
 	
 	item "tash__log"
 		item "test_stdout"
-			run tash__log "test" "$TASH_BOLD_GREEN" "this is a test!" 
-			assert stdout contains "this is a test!"
+			run tash__log "test" "$TASH_BOLD_GREEN" "tash is cool!" 
+			assert stdout contains "tash is cool"
+			assert stdout contains "test"
 			assert -z stderr
 			assert exitcode -eq 0
 		end
 		item "test_stderr"
-			run tash__log "test" "$TASH_BOLD_GREEN" "this is a test!" 1
+			run tash__log "test" "$TASH_BOLD_GREEN" "tash is cool!" 1
 			assert -z stdout
-			assert stderr contains "this is a test!"
+			assert stderr contains "tash is cool!"
+			assert stderr contains "test"
 			assert exitcode -eq 0	
 		end
 	end
+
+	item "tash__success"
+		run tash__success "this is a test!"	
+		assert stdout contains "this is a test!"
+		assert stdout contains "ok"
+		assert -z stderr 
+		assert exitcode -eq 0
+	end
+
+
+	item "tash__error"
+		run tash__error "this is a test!"
+		assert stderr contains "this is a test!"
+		assert stderr contains "err"
+		assert -z stdout
+		assert exitcode -eq 0
+	end
+
+	item "tash__results"	
+		run tash__results "this is a test!"	
+		assert stdout contains "this is a test!"
+		assert stdout contains "results"
+		assert -z stderr 
+		assert exitcode -eq 0
+	end
+
+	item "tash__hint"	
+		run tash__hint "this is a test!"	
+		assert stdout contains "this is a test!"
+		assert stdout contains "hint"
+		assert -z stderr 
+		assert exitcode -eq 0
+	end
+
+	item "tash__failure"	
+		run tash__failure "this is a test!"
+		assert stderr contains "this is a test!"
+		assert stderr contains "failure"
+		assert -z stdout
+		assert exitcode -eq 0
+	end
+
+	item "tash__terminate"
+		# Need to run it in a real subshell like this,
+		# otherwise Tash terminates.
+		run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash__terminate ${TASH_E_ASSERT_ARGUMENT_COUNT}'
+		assert stderr contains "terminated"
+		assert stderr contains "E009"
+		assert -z stdout
+		# Finally, we can assert the exitcode with something
+		# else than 0.
+		assert exitcode -eq 9
+	end
 end
+
 
 item "external"
 end
