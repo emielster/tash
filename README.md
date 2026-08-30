@@ -11,5 +11,8 @@
 ***T***est ***A***utomation for ***SH***ell
 <br>
 ![Shell](https://img.shields.io/badge/Language-Shell-blue)
-![Status](https://img.shields.io/badge/Status-early_development-orange)
+![Status](https://img.shields.io/badge/Status-Early_development-orange)
+![License](https://img.shields.io/badge/License-GLPv3-blue.svg)
+![Version](https://img.shields.io/badge/Version-0.0.1-orange.svg)
+![POSIX](https://img.shields.io/badge/POSIX-Compliant-bightgreen.svg)
 </div>
