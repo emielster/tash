@@ -5,6 +5,18 @@ SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 
 tash_init "$@"
 
+# WARNING: Because Tash uses item blocks, you can indent them
+# with tabs and that makes the code more readable. But this is
+# unusual shell syntax! Your formatter might reformat the whole thing 
+# to be flat on save! Please figure out how to disable it,
+# because there are a lot of formatters out there.
+#
+# For LazyVim users (like me):
+# :lua vim.b.autoformat = false
+
+
+# prettier-ignore
+# shfmt:off
 item "internal"
 	item "tash__is_valid_name"	
 		item "valid_name"
@@ -318,8 +330,8 @@ item "internal"
 	end
 end
 
-
 item "external"
+#WIP
 end
 
 tash_end
