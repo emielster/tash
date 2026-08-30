@@ -1,5 +1,5 @@
 <div align="center">
-<img alt="Tash" src="assets/tash_logo.png" width="150">
+<img alt="Tash" src="assets/tash-logo.png" width="150">
 
 ***T***est ***A***utomation for ***SH***ell
 

@@ -262,13 +262,18 @@ tash__log() {
 	label="$1"
 	color="$2"
 	message="$3"
-	printf "${TASH_BOLD_WHITE}[${color}${label}${TASH_BOLD_WHITE}] ${TASH_COLOR_RESET}%s\n" "$message"
+	is_error="$4"
+	if [ -n "$is_error" ]; then
+		printf "${TASH_BOLD_WHITE}[${color}${label}${TASH_BOLD_WHITE}] ${TASH_COLOR_RESET}%s\n" "$message" >&2
+	else
+		printf "${TASH_BOLD_WHITE}[${color}${label}${TASH_BOLD_WHITE}] ${TASH_COLOR_RESET}%s\n" "$message"
+	fi
 }
 tash__success() {
 	tash__log "ok" "$TASH_BOLD_GREEN" "$*"
 }
 tash__error() {
-	tash__log "err" "$TASH_BOLD_RED" "$*"
+	tash__log "err" "$TASH_BOLD_RED" "$*" 1
 }
 tash__results() {
 	tash__log "results" "$TASH_BOLD_YELLOW" "$*"
@@ -277,7 +282,7 @@ tash__hint() {
 	tash__log "hint" "$TASH_BOLD_YELLOW" "$*"
 }
 tash__failure() {
-	tash__log "failure" "$TASH_BOLD_RED" "$*"
+	tash__log "failure" "$TASH_BOLD_RED" "$*" 1
 }
 
 # Terminates with an error code. In Tash, the exit code correlates directly with an error code.
@@ -297,14 +302,17 @@ TASH_E_END_ARGUMENT_COUNT=3
 TASH_E_END_GLOBAL_SCOPE=4
 TASH_E_VALUE_ARGUMENT_COUNT=5
 TASH_E_RUN_ARGUMENT_COUNT=6
-TASH_E_ASSERT_ARGUMENT_COUNT=7
-TASH_E_ASSERT_INVALID_SCOPE=8
-TASH_E_ASSERT_UNKNOWN_OPERATOR=9
-TASH_E_TASH_FMT_ARGUMENT_COUNT=10
-TASH_E_TASH_INIT_UNKNOWN_ARGUMENT=11
-TASH_E_TASH_INIT_ARGUMENT_COUNT=12
-TASH_E_TASH_END_INVALID_SCOPE=13
-TASH_E_TASH_END_TESTS_FAILED=14
+TASH_E_FAIL_ARGUMENT_COUNT=7
+TASH_E_FAIL_INVALID_SCOPE=8
+TASH_E_ASSERT_ARGUMENT_COUNT=9
+TASH_E_ASSERT_INVALID_SCOPE=10
+TASH_E_ASSERT_UNKNOWN_OPERATOR=11
+TASH_E_TASH_FMT_ARGUMENT_COUNT=12
+TASH_E_TASH_PRINT_ARGUMENT_COUNT=13
+TASH_E_TASH_INIT_UNKNOWN_ARGUMENT=14
+TASH_E_TASH_INIT_ARGUMENT_COUNT=15
+TASH_E_TASH_END_INVALID_SCOPE=16
+TASH_E_TASH_END_TESTS_FAILED=17
 # In Bash, you would use an array, but since Tash should work with **any**
 # POSIX-compliant shell, we can't use any of the Bash extensions, including arrays.
 TASH_SCOPE="tests" # Start at the tests scope. Treat this as the global scope for everything.
@@ -382,15 +390,8 @@ end() {
 				if [ "$tash__gv" = "1" ]; then
 					TASH_COUNT_FAILED=$((TASH_COUNT_FAILED + 1))
 					TASH_FAILED_TESTS="$TASH_FAILED_TESTS $TASH_SCOPE"
-					tash__get "${TASH_SCOPE}::__failitem"
-					failitem=$tash__gv
-					tash__get "${TASH_SCOPE}::__failop"
-					failop=$tash__gv
-					tash__get "${TASH_SCOPE}::__failexpected"
-					failexpected=$tash__gv
-					tash__get "${TASH_SCOPE}::__failactual"
-					failactual=$tash__gv
-					tash__failure "$(tash__failure_message "$failitem" "$failop" "$failexpected" "$failactual")"
+					tash__get "${TASH_SCOPE}::__failmessage"
+					tash__failure "$tash__gv"
 				else
 					TASH_COUNT_SUCCEEDED=$((TASH_COUNT_SUCCEEDED + 1))
 					tash__success "$TASH_SCOPE succeeded!"
@@ -476,6 +477,53 @@ run() {
 
 }
 
+# Use this to manually fail tests wiht a reason
+# Example:
+# ```sh
+# #!/bin/sh
+#
+# # --snip--
+#	run mktemp
+#	file=$(tash_print stdout)
+#	if ! [ -f $file ]; then fail "expected mktemp to create file"; fi
+# # --snip--
+# ```
+TASH_TESTS=""
+TASH_FAILED_TESTS=""
+TASH_COUNT_SUCCEEDED=0
+TASH_COUNT_FAILED=0
+TASH_COUNT_IGNORED=0
+fail() {
+	if [ $# -lt 1 ]; then
+		tash__error "fail: expected atleast one argument (reason)"
+		tash__terminate "$TASH_E_FAIL_ARGUMENT_COUNT"
+	fi
+
+	if [ "$TASH_SCOPE" = "tests" ]; then
+		tash__error "fail: cannot fail globally"
+		tash__hint "fail: create an item and fail in there"
+		tash__terminate "$TASH_E_FAIL_INVALID_SCOPE"
+	fi
+
+	case " $TASH_TESTS " in
+	*" $TASH_SCOPE "*) ;;
+	*) TASH_TESTS="$TASH_TESTS $TASH_SCOPE" ;;
+	esac
+
+	if [ "$TASH_MODE" = "inspect" ] && ! tash__scope_is_descendant_of "$TASH_SCOPE" "$TASH_INSPECTING_TEST"; then
+		return
+	fi
+
+	tash__get "${TASH_SCOPE}::__failed"
+	if [ "$tash__gv" = "1" ] || [ "$TASH_MODE" = "preview" ]; then
+		return 0
+	fi
+
+	tash__set "${TASH_SCOPE}::__failed" "1"
+	tash__set "${TASH_SCOPE}::__failscope" "$TASH_SCOPE"
+	tash__set "${TASH_SCOPE}::__failmessage" "$*"
+}
+
 # Use this to compare an item relative to the scope, with a value. Fails the test if this the comparison
 # is not true. This turns the current scope into a test, if not already.
 # Mimics POSIX test(1), plus contains for substrings
@@ -500,11 +548,6 @@ run() {
 #
 # # --snip--
 # ```
-TASH_TESTS=""
-TASH_FAILED_TESTS=""
-TASH_COUNT_SUCCEEDED=0
-TASH_COUNT_FAILED=0
-TASH_COUNT_IGNORED=0
 assert() {
 	if [ $# -lt 2 ]; then
 		tash__error "assert: expected atleast two arguments (item, operator, [expected])"
@@ -521,10 +564,10 @@ assert() {
 	*" $TASH_SCOPE "*) ;;
 	*) TASH_TESTS="$TASH_TESTS $TASH_SCOPE" ;;
 	esac
+
 	if [ "$TASH_MODE" = "inspect" ] && ! tash__scope_is_descendant_of "$TASH_SCOPE" "$TASH_INSPECTING_TEST"; then
 		return
 	fi
-
 	case $1 in
 	-z | -n)
 		op=$1
@@ -566,12 +609,7 @@ assert() {
 
 	if [ "$ok" = "1" ]; then return 0; fi
 
-	tash__set "${TASH_SCOPE}::__failed" "1"
-	tash__set "${TASH_SCOPE}::__failpath" "$resolved"
-	tash__set "${TASH_SCOPE}::__failitem" "$item"
-	tash__set "${TASH_SCOPE}::__failop" "$op"
-	tash__set "${TASH_SCOPE}::__failexpected" "$expected"
-	tash__set "${TASH_SCOPE}::__failactual" "$actual"
+	fail "$(tash__failure_message "$item" "$op" "$expected" "$actual")"
 
 }
 
@@ -601,6 +639,27 @@ tash_fmt() {
 		tash__terminate "$TASH_E_TASH_FMT_ARGUMENT_COUNT"
 	fi
 	printf '%b' "$1"
+}
+
+# Use this to print and internal variable of Tash.
+# Example:
+# ```
+# #!/bin/sh
+#
+# # --snip--
+#	run mktemp
+#	file=$(tash_print stdout)
+#
+# # --snip--
+# ```
+tash_print() {
+	if [ $# -ne 1 ]; then
+		tash__error "tash_print: expected exactly one argument (item)"
+		tash__terminate "$TASH_E_TASH_PRINT_ARGUMENT_COUNT"
+	fi
+
+	tash__get "${TASH_SCOPE}::$1"
+	printf "%s\n" "$tash__gv"
 }
 
 # Use this to initialize Tash, preferably with all the arguments of your program passed into it.
@@ -704,15 +763,14 @@ tash_end() {
 
 	else
 		for path in $TASH_FAILED_TESTS; do
-			tash__get "${path}::__failpath"
-			failpath=$tash__gv
-			run_scope=${failpath%::*}
+			tash__get "${path}::__failscope"
+			run_scope=$tash__gv
 			tash__get "${run_scope}::stdout"
 			stdout=$tash__gv
 			tash__get "${run_scope}::stderr"
 			stderr=$tash__gv
 			if [ -n "$stdout" ] || [ -n "$stderr" ]; then
-				tash__window "$failpath" \
+				tash__window "$path" \
 					"$(printf "stdout: %s" "${stdout:-"(empty)"}")" \
 					"$(printf "stderr: %s" "${stderr:-"(empty)"}")"
 				printf "\n"
