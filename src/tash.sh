@@ -179,8 +179,8 @@ tash__preview_tree() {
 		name=${path##*::}
 		case " $TASH_VALUE_PATHS " in
 		*" $path "*)
-			val=$(tash__get "$path")
-			printf "%s%s%s = %s\n" "$prefix" "$branch" "$name" "$val"
+			tash__get "$path"
+			printf "%s%s%s = %s\n" "$prefix" "$branch" "$name" "$tash__gv"
 			;;
 		*)
 			printf "%s%s%s\n" "$prefix" "$branch" "$name"
@@ -229,20 +229,26 @@ TASH_VALUE_PATHS=""
 # environment variable
 tash__var_name() {
 	name=$1
-	printf "%s" "TASH_VAR_$(printf "%s" "$name" | sed 's/::/__/g')"
+	result=""
+	# This is much faster than launching a subshell everytime.
+	while [ "$name" != "${name#*::}" ]; do
+		result="${result}${name%%::*}__"
+		name=${name#*::}
+	done
+	tash__vn="TASH_VAR_${result}${name}"
 }
 
 tash__set() {
-	var=$(tash__var_name "$1")
-	eval "$var=\$2"               # From my LSP: "Don't use $ on the left side of assignments.". Therefore, this is in an eval command.
+	tash__var_name "$1"
+	eval "$tash__vn=\$2"          # From my LSP: "Don't use $ on the left side of assignments.". Therefore, this is in an eval command.
 	case " $TASH_VALUE_PATHS " in # Add the value to TASH_VALUE_PATHS if it doesn't already exist, for preview mode
 	*" $1 "*) ;;
 	*) TASH_VALUE_PATHS="$TASH_VALUE_PATHS $1" ;;
 	esac
 }
 tash__get() {
-	var=$(tash__var_name "$1")
-	eval "printf '%s\n' \"\$$var\""
+	tash__var_name "$1"
+	eval "tash__gv=\$$tash__vn"
 }
 
 # See more at: https://gist.github.com/JBlond/2fea43a3049b38287e5e9cefc87b2124 (\e means \033, \e is a Bash/zsh extension)
@@ -372,13 +378,18 @@ end() {
 		elif tash__should_log; then
 			case " $TASH_TESTS " in
 			*" $TASH_SCOPE "*)
-				if [ "$(tash__get "${TASH_SCOPE}::__failed")" = "1" ]; then
+				tash__get "${TASH_SCOPE}::__failed"
+				if [ "$tash__gv" = "1" ]; then
 					TASH_COUNT_FAILED=$((TASH_COUNT_FAILED + 1))
 					TASH_FAILED_TESTS="$TASH_FAILED_TESTS $TASH_SCOPE"
-					failitem=$(tash__get "${TASH_SCOPE}::__failitem")
-					failop=$(tash__get "${TASH_SCOPE}::__failop")
-					failexpected=$(tash__get "${TASH_SCOPE}::__failexpected")
-					failactual=$(tash__get "${TASH_SCOPE}::__failactual")
+					tash__get "${TASH_SCOPE}::__failitem"
+					failitem=$tash__gv
+					tash__get "${TASH_SCOPE}::__failop"
+					failop=$tash__gv
+					tash__get "${TASH_SCOPE}::__failexpected"
+					failexpected=$tash__gv
+					tash__get "${TASH_SCOPE}::__failactual"
+					failactual=$tash__gv
 					tash__failure "$(tash__failure_message "$failitem" "$failop" "$failexpected" "$failactual")"
 				else
 					TASH_COUNT_SUCCEEDED=$((TASH_COUNT_SUCCEEDED + 1))
@@ -527,12 +538,14 @@ assert() {
 		;;
 	esac
 
-	if [ "$(tash__get "${TASH_SCOPE}::__failed")" = "1" ] || [ "$TASH_MODE" = "preview" ]; then
+	tash__get "${TASH_SCOPE}::__failed"
+	if [ "$tash__gv" = "1" ] || [ "$TASH_MODE" = "preview" ]; then
 		return 0 # If already failed, you skip the remaining asserts OR if mode is preview
 	fi
 
 	resolved="${TASH_SCOPE}::${item}"
-	actual=$(tash__get "$resolved")
+	tash__get "$resolved"
+	actual=$tash__gv
 
 	ok=0
 	case "$op" in
@@ -682,8 +695,8 @@ tash_end() {
 			if tash__scope_is_descendant_of "$path" "$TASH_INSPECTING_TEST"; then
 				case " $TASH_VALUE_PATHS " in
 				*" $path "*)
-					value=$(tash__get $path)
-					tash__window "inspection: $path" "${value:-"(empty)"}"
+					tash__get "$path"
+					tash__window "inspection: $path" "${tash__gv:-"(empty)"}"
 					;;
 				esac
 			fi
@@ -691,10 +704,13 @@ tash_end() {
 
 	else
 		for path in $TASH_FAILED_TESTS; do
-			failpath=$(tash__get "${path}::__failpath")
+			tash__get "${path}::__failpath"
+			failpath=$tash__gv
 			run_scope=${failpath%::*}
-			stdout=$(tash__get "${run_scope}::stdout")
-			stderr=$(tash__get "${run_scope}::stderr")
+			tash__get "${run_scope}::stdout"
+			stdout=$tash__gv
+			tash__get "${run_scope}::stderr"
+			stderr=$tash__gv
 			if [ -n "$stdout" ] || [ -n "$stderr" ]; then
 				tash__window "$failpath" \
 					"$(printf "stdout: %s" "${stdout:-"(empty)"}")" \

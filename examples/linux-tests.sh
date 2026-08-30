@@ -1,6 +1,8 @@
 #!/bin/sh
 
-. ../src/tash.sh
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+. $SCRIPT_DIR/../src/tash.sh
 tash_init "$@"
 
 item "printf"
