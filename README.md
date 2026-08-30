@@ -4,7 +4,7 @@
 </picture>
 
 <br>
-<img src="assets/demo.gif" width="500" alt="Tash demo">
+<img src="assets/demo.gif" width="600" alt="Tash demo">
 <br>
 
 
