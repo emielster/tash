@@ -3,9 +3,6 @@
 	<img alt="Tash" src="assets/tash_logo.png" width="150">
 </picture>
 
-<br>
-<img src="assets/demo.gif" width="600" alt="Tash demo">
-<br>
 
 
 ***T***est ***A***utomation for ***SH***ell
@@ -16,3 +13,7 @@
 ![Version](https://img.shields.io/badge/Version-0.0.1-orange.svg)
 ![POSIX](https://img.shields.io/badge/POSIX-Compliant-bightgreen.svg)
 </div>
+
+<br>
+<img src="assets/demo.gif" width="600" alt="Tash demo">
+<br>
