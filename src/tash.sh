@@ -299,7 +299,7 @@ tash__terminate() {
 TASH_E_ITEM_ARGUMENT_COUNT=1 # e.g. https://tash.dev/error/E001
 TASH_E_ITEM_INVALID_NAME=2
 TASH_E_END_ARGUMENT_COUNT=3
-TASH_E_END_GLOBAL_SCOPE=4
+TASH_E_END_INVALID_SCOPE=4
 TASH_E_VALUE_ARGUMENT_COUNT=5
 TASH_E_RUN_ARGUMENT_COUNT=6
 TASH_E_FAIL_ARGUMENT_COUNT=7
@@ -376,7 +376,7 @@ end() {
 
 	if [ "$TASH_SCOPE" = "tests" ]; then
 		tash__error "end: cannot exit out of the global scope"
-		tash__terminate "$TASH_E_END_GLOBAL_SCOPE"
+		tash__terminate "$TASH_E_END_INVALID_SCOPE"
 	fi
 
 	case " $TASH_TESTS " in
@@ -459,8 +459,6 @@ run() {
 		return
 	fi
 
-	#TODO: There might be some better way to do this.
-	# This creates two temporary files on each run command, which is, slow.
 	"$@" 1>"$TASH_TMP_STDOUT" 2>"$TASH_TMP_STDERR" # Temporarily move 1 (stdout) to a temporary file made with mktemp, the same for
 	# with 2 (stderr)
 

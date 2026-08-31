@@ -11,7 +11,7 @@ tash_init "$@"
 # to be flat on save! Please figure out how to disable it,
 # because there are a lot of formatters out there.
 #
-# For LazyVim users (like me):
+# For my fellow LazyVim users (like me):
 # :lua vim.b.autoformat = false
 
 
@@ -330,8 +330,258 @@ item "internal"
 	end
 end
 
+if [ $TASH_COUNT_FAILED -eq 0 ]; then
+    printf "tash ${TASH_BOLD_GREEN}finished${TASH_COLOR_RESET} internal checks without any errors!\n"
+fi
+
+
 item "external"
-#WIP
+    item "item" 
+        item "argument_count"      
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; item'
+            assert stderr contains "terminated"
+            assert stderr contains "E001"
+            assert stderr contains "expected exactly one argument"
+            assert -z stdout
+            assert exitcode -eq 1
+        end
+        item "invalid_name"
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; item "invalid-name::"'
+            assert stderr contains "terminated"
+            assert stderr contains "E002"
+            assert stderr contains "name must match"
+            assert stdout contains "don't use spaces, colons or slashes"
+            assert exitcode -eq 2 
+        end
+        item "test"
+            case " $TASH_ITEM_PATHS " in
+            *" $TASH_SCOPE "*) ;;
+            *) fail "expected item to add $TASH_SCOPE to TASH_ITEM_PATHS" ;;
+            esac
+            item make_me_a_test
+                value 0
+            end
+            assert make_me_a_test -eq 0 
+        end 
+
+        item "make_me_a_test"
+            value 0
+        end
+        assert make_me_a_test -eq 0
+    end
+    item "end"
+        item "argument_count" 
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; end test'
+            assert stderr contains "terminated"
+            assert stderr contains "E003"
+            assert stderr contains "expected zero arguments"
+            assert -z stdout
+            assert exitcode -eq 3 
+        end
+        item "invalid_scope"
+            run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; end'
+            assert stderr contains "terminated"
+            assert stderr contains "E004"
+            assert stderr contains "cannot exit out of the global scope"
+            assert -z stdout
+            assert exitcode -eq 4
+        end
+        # Same here again, we can't really test 
+        # end, so we catch it in a subshell
+        temp=$(tash__mk_temp) # Safe to use here, because it is already testsed
+        TEMP_TASH_SCOPE=$TASH_SCOPE
+        ERR=""
+        {
+            TEMP_TASH_COUNT_SUCCEEDED=$TASH_COUNT_SUCCEEDED
+            item "log_success" 
+                item "make_me_a_test"
+                     value 0
+                end
+                assert make_me_a_test -eq 0 
+            end 
+            if [ $((TEMP_TASH_COUNT_SUCCEEDED + 1)) -ne $TASH_COUNT_SUCCEEDED ]; then
+                ERR="expected end to increase TASH_COUNT_SUCCEEDED by one" 
+            else 
+                TASH_COUNT_SUCCEEDED=$((TASH_COUNT_SUCCEEDED-1))
+            fi 
+            
+        } > "$temp"
+        
+        contents=$(cat "$temp")
+        rm -f "$temp"
+        case "$contents" in
+        *"log_success succeeded"*) ;;
+        *) fail "expected end to print a success message, but got: $contents" ;;
+        esac
+
+        if [ "$TEMP_TASH_SCOPE" != "$TASH_SCOPE" ]; then
+            fail "expected end to end $TASH_SCOPE 'log_success' scope"
+        fi
+
+        if [ -n "$ERR" ]; then
+            fail "$ERR"
+        fi
+        temp=$(tash__mk_temp)
+        TEMP_TASH_SCOPE=$TASH_SCOPE
+        ERR=""
+        {
+            TEMP_TASH_COUNT_FAILED=$TASH_COUNT_FAILED
+            item "log_failure"
+                item "make_me_a_test"
+                    value 0
+                end
+                assert make_me_a_test -eq 1
+            end
+            if [ $((TEMP_TASH_COUNT_FAILED + 1)) -ne $TASH_COUNT_FAILED  ]; then
+                ERR="expected end to increase TASH_COUNT_FAILED by one"
+            else 
+                TASH_COUNT_FAILED=$((TASH_COUNT_FAILED-1))
+            fi 
+            
+            case "$TASH_FAILED_TESTS" in
+            *"${TASH_SCOPE}::log_failure"*) ;;
+            *) ERR="expected end to add log_failure to TASH_FAILED_TESTS, but TASH_FAILED_TESTS is $TASH_FAILED_TESTS" ;; 
+            esac
+            
+            
+        } 2> "$temp"
+
+        contents=$(cat "$temp") 
+        rm -f "$temp"
+        case "$contents" in
+        *"expected make_me_a_test == 1, but make_me_a_test is 0"*) ;;
+        *) fail "expected end to print a failure message, but got: $contents" ;;
+        esac
+
+        if [ -n "$ERR" ]; then
+            fail "$ERR"
+        fi
+
+        if [ "$TEMP_TASH_SCOPE" != "$TASH_SCOPE" ]; then
+            fail "expected end to end $TASH_SCOPE 'log_failure' scope"
+        fi
+        
+        temp=$(tash__mk_temp)
+        TEMP_TASH_MODE=$TASH_MODE
+        TEMP_TASH_SCOPE=$TASH_SCOPE
+        ERR=""
+        {
+            TEMP_TASH_COUNT_IGNORED="$TASH_COUNT_IGNORED"  
+            TASH_MODE="inspect"
+            item "should_not_log_inspect" 
+                item "make_me_a_test"
+                    value 0
+                end
+                assert make_me_a_test -eq 0
+            end
+
+            if [ $((TEMP_TASH_COUNT_IGNORED + 1)) -ne $TASH_COUNT_IGNORED ]; then
+                ERR="expected end to increase TASH_COUNT_IGNORED by one"
+            else 
+                TASH_COUNT_IGNORED=$((TASH_COUNT_IGNORED-1))
+            fi
+
+            
+        } >"$temp"
+        TASH_MODE=$TEMP_TASH_MODE
+
+        contents=$(cat "$temp") 
+        rm -f "$temp"
+        
+        if [ -n "$ERR" ]; then
+            fail "$ERR"
+        fi
+        
+        if [ "$TEMP_TASH_SCOPE" != "$TASH_SCOPE" ]; then
+            fail "expected end to end $TASH_SCOPE 'should_not_log_inspect' scope"
+        fi
+
+    end
+    item "value" 
+        item "argument_count"  
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; value'
+            assert stderr contains "terminated"
+            assert stderr contains "E005"
+            assert stderr contains "expected exactly one argument"
+            assert -z stdout
+            assert exitcode -eq 5
+        end
+        item "test"
+            value 0
+        end
+        case "$TASH_ITEM_PATHS" in
+        *"$TASH_SCOPE::test"*) ;;
+        *) fail "expected value to add $TASH_SCOPE::test to TASH_ITEM_PATHS, but TASH_ITEM_PATHS is $TASH_ITEM_PATHS" ;;
+        esac
+        
+        tash__get "$TASH_SCOPE::test"
+        if [ "$tash__gv" -ne 0 ]; then
+            fail "expected value to make $TASH_SCOPE::test 0, but $TASH_SCOPE::test is $tash__gv"
+        fi
+        
+        assert test -eq 0
+    end
+    item "run"
+        item "argument_count" 
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; run'
+            assert stderr contains "terminated"
+            assert stderr contains "E006"
+            assert stderr contains "expected atleast one argument (command...)"
+            assert -z stdout
+            assert exitcode -eq 6
+        end
+        # We cannot do run run echo "something" here, because run itself
+        # sets exitcode and co, so it just overwrites it
+        item "preview"
+            TEMP_TASH_MODE=$TASH_MODE
+            TASH_MODE="preview"
+            run echo "something"
+            assert -z stdout
+            assert -z stderr
+            assert -z exitcode
+            TASH_MODE=$TEMP_TASH_MODE
+        end
+        item "inspect_runs"
+            TEMP_TASH_MODE=$TASH_MODE
+            TEMP_TASH_INSPECTING_TEST=$TASH_INSPECTING_TEST
+            TASH_INSPECTING_TEST="$TASH_SCOPE"
+            TASH_MODE="inspect"
+            run echo "something"
+            TASH_MODE=$TEMP_TASH_MODE
+            TASH_INSPECTING_TEST=$TEMP_TASH_INSPECTING_TEST
+            assert stdout = "something"
+            assert -z stderr
+            assert exitcode -eq 0
+        end
+        item "inspect_skips"
+            TEMP_TASH_MODE=$TASH_MODE
+            TEMP_TASH_INSPECTING_TEST=$TASH_INSPECTING_TEST
+            TASH_MODE="inspect"
+            TASH_INSPECTING_TEST="tests::some_other_test"
+            tmpfile=$(tash__mk_temp) # when skipping over, assert itself also skips over so we cannot
+                                     # rely on that
+            rm -f "$tmpfile"
+            run touch "$tmpfile"
+            TASH_MODE=$TEMP_TASH_MODE
+            TASH_INSPECTING_TEST=$TEMP_TASH_INSPECTING_TEST
+            if [ -f "$tmpfile" ]; then
+                fail "expected run to skip execution when scope doesn't match TASH_INSPECTING_TEST"
+            fi
+            item "make_me_a_test"
+                value 0
+            end
+            assert make_me_a_test -eq 0
+        end
+        run echo "something"
+        assert stdout = "something" 
+        assert -z stderr
+        assert exitcode -eq 0
+    end
+
+    item "fail"
+
+    end
 end
+
 
 tash_end
