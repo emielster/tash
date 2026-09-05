@@ -307,12 +307,13 @@ TASH_E_FAIL_INVALID_SCOPE=8
 TASH_E_ASSERT_ARGUMENT_COUNT=9
 TASH_E_ASSERT_INVALID_SCOPE=10
 TASH_E_ASSERT_UNKNOWN_OPERATOR=11
-TASH_E_TASH_FMT_ARGUMENT_COUNT=12
-TASH_E_TASH_PRINT_ARGUMENT_COUNT=13
-TASH_E_TASH_INIT_UNKNOWN_ARGUMENT=14
-TASH_E_TASH_INIT_ARGUMENT_COUNT=15
-TASH_E_TASH_END_INVALID_SCOPE=16
-TASH_E_TASH_END_TESTS_FAILED=17
+TASH_E_CHECK_ARGUMENT_COUNT=12
+TASH_E_TASH_FMT_ARGUMENT_COUNT=13
+TASH_E_TASH_PRINT_ARGUMENT_COUNT=14
+TASH_E_TASH_INIT_UNKNOWN_ARGUMENT=15
+TASH_E_TASH_INIT_ARGUMENT_COUNT=16
+TASH_E_TASH_END_INVALID_SCOPE=17
+TASH_E_TASH_END_TESTS_FAILED=18
 # In Bash, you would use an array, but since Tash should work with **any**
 # POSIX-compliant shell, we can't use any of the Bash extensions, including arrays.
 TASH_SCOPE="tests" # Start at the tests scope. Treat this as the global scope for everything.
@@ -611,6 +612,35 @@ assert() {
 
 }
 
+# Use this to quickly assert stdout, stderr and
+# exitcode in this order: check exitcode [stdout] [stderr].
+# It is the equivalent to:
+# assert exitcode -eq N
+# assert stdout contains [...]
+# assert stderr contains [...]
+# Example:
+# ```sh
+# #!/bin/sh
+# # --snip--
+# run echo "hello"
+# check 0 "hello"
+# # --snip--
+#
+# ```
+check() {
+	if [ $# -lt 1 ] || [ $# -gt 3 ]; then
+		tash__error "check: expected one to three arguments (exitcode, [stdout], [stderr])"
+		tash__terminate "$TASH_E_CHECK_ARGUMENT_COUNT"
+	fi
+
+	assert exitcode -eq "$1"
+	if [ $# -ge 2 ]; then
+		assert stdout contains "$2"
+	fi
+	if [ $# -ge 3 ]; then
+		assert stderr contains "$3"
+	fi
+}
 # Use this to format and interpret \n, \t, ... inside a string
 # Foreshadowing: it is just printf but different.
 # This is because POSIX shell interprets this:
@@ -682,7 +712,7 @@ tash_init() {
 			TASH_INSPECTING_TEST="tests::$2"
 			;;
 		-V | --version)
-			printf "tash ${TASH_BOLD_WHITE}v0.0.1${TASH_COLOR_RESET} (semver)\n"
+			printf "tash ${TASH_BOLD_WHITE}v0.1.1${TASH_COLOR_RESET} (semver)\n"
 			tash__hint "run $0 --h | --help for help"
 			exit 0
 			;;

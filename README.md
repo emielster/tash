@@ -17,7 +17,7 @@
 
 ## What is Tash?
 
-Tash is a testing framework that is [POSIX-compliant](https://en.wikipedia.org/wiki/POSIX) and has zero dependencies. Its main goal is to
+Tash is a lightweight testing framework that is [POSIX-compliant](https://en.wikipedia.org/wiki/POSIX) and has zero dependencies. Its main goal is to
 be runnable on every system that has a POSIX shell<sub>(Bash, Dash, Zsh, Ksh, ...)</sub>. 
 
 That is pretty much it. It allows you to write tests, in a portable manner. It is pure shell, so zero dependencies.

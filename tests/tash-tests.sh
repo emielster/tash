@@ -342,16 +342,14 @@ item "external"
             assert stderr contains "terminated"
             assert stderr contains "E001"
             assert stderr contains "expected exactly one argument"
-            assert -z stdout
-            assert exitcode -eq 1
+            check 1 ""
         end
         item "invalid_name"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; item "invalid-name::"'
             assert stderr contains "terminated"
             assert stderr contains "E002"
             assert stderr contains "name must match"
-            assert stdout contains "don't use spaces, colons or slashes"
-            assert exitcode -eq 2 
+            check 2 "don't use spaces, colons or slashes"
         end
         item "test"
             case " $TASH_ITEM_PATHS " in
@@ -375,16 +373,14 @@ item "external"
             assert stderr contains "terminated"
             assert stderr contains "E003"
             assert stderr contains "expected zero arguments"
-            assert -z stdout
-            assert exitcode -eq 3 
+            check 3 ""
         end
         item "invalid_scope"
             run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; end'
             assert stderr contains "terminated"
             assert stderr contains "E004"
             assert stderr contains "cannot exit out of the global scope"
-            assert -z stdout
-            assert exitcode -eq 4
+            check 4 ""
         end
         # Same here again, we can't really test 
         # end, so we catch it in a subshell
@@ -503,8 +499,7 @@ item "external"
             assert stderr contains "terminated"
             assert stderr contains "E005"
             assert stderr contains "expected exactly one argument"
-            assert -z stdout
-            assert exitcode -eq 5
+            check 5 ""
         end
         item "test"
             value 0
@@ -514,8 +509,8 @@ item "external"
         *) fail "expected value to add $TASH_SCOPE::test to TASH_ITEM_PATHS, but TASH_ITEM_PATHS is $TASH_ITEM_PATHS" ;;
         esac
         
-        tash__get "$TASH_SCOPE::test"
-        if [ "$tash__gv" -ne 0 ]; then
+        tash__get "${TASH_SCOPE}::test"
+        if [ "$tash__gv" != "0" ]; then
             fail "expected value to make $TASH_SCOPE::test 0, but $TASH_SCOPE::test is $tash__gv"
         fi
         
@@ -527,19 +522,24 @@ item "external"
             assert stderr contains "terminated"
             assert stderr contains "E006"
             assert stderr contains "expected atleast one argument (command...)"
-            assert -z stdout
-            assert exitcode -eq 6
+            check 6 ""
         end
         # We cannot do run run echo "something" here, because run itself
         # sets exitcode and co, so it just overwrites it
         item "preview"
             TEMP_TASH_MODE=$TASH_MODE
             TASH_MODE="preview"
-            run echo "something"
-            assert -z stdout
-            assert -z stderr
-            assert -z exitcode
+            tmpfile=$(tash__mk_temp)
+            rm -f "$tmpfile"
+            run touch "$tmpfile"
             TASH_MODE=$TEMP_TASH_MODE
+            if [ -f "$tmpfile" ]; then
+                fail "expected run to skip execution in preview mode, but $tmpfile was created"
+            fi
+            item "make_me_a_test"
+                value 0
+            end
+            assert make_me_a_test -eq 0
         end
         item "inspect_runs"
             TEMP_TASH_MODE=$TASH_MODE
@@ -549,9 +549,7 @@ item "external"
             run echo "something"
             TASH_MODE=$TEMP_TASH_MODE
             TASH_INSPECTING_TEST=$TEMP_TASH_INSPECTING_TEST
-            assert stdout = "something"
-            assert -z stderr
-            assert exitcode -eq 0
+            check 0 "something"
         end
         item "inspect_skips"
             TEMP_TASH_MODE=$TASH_MODE
@@ -565,7 +563,7 @@ item "external"
             TASH_MODE=$TEMP_TASH_MODE
             TASH_INSPECTING_TEST=$TEMP_TASH_INSPECTING_TEST
             if [ -f "$tmpfile" ]; then
-                fail "expected run to skip execution when scope doesn't match TASH_INSPECTING_TEST"
+                fail "expected run to skip execution when scope doesn't match TASH_INSPECTING_TEST, but $tmpfile was created"
             fi
             item "make_me_a_test"
                 value 0
@@ -573,15 +571,13 @@ item "external"
             assert make_me_a_test -eq 0
         end
         run echo "something"
-        assert stdout = "something" 
-        assert -z stderr
-        assert exitcode -eq 0
-    end
-
-    item "fail"
-
+        check 0 "something"
     end
 end
 
+
+item "integration"
+
+end
 
 tash_end
