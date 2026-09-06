@@ -17,18 +17,24 @@
 
 ## What is Tash?
 
-Tash is a lightweight testing framework that is [POSIX-compliant](https://en.wikipedia.org/wiki/POSIX) and has zero dependencies. Its main goal is to
+Tash is a tiny, lightweight testing framework (1 file!) that is [POSIX-compliant](https://en.wikipedia.org/wiki/POSIX) and has zero dependencies. Its main goal is to
 be runnable on every system that has a POSIX shell<sub>(Bash, Dash, Zsh, Ksh, ...)</sub>. 
 
 That is pretty much it. It allows you to write tests, in a portable manner. It is pure shell, so zero dependencies.
 
-## Advantages of Tash 
+<!-- ## Why choose Tash? -->
+<!---->
+<!-- If you want portable tests, zero dependencies, a tiny footprint, a fast startup, and a nice UX, Tash is probably for you. -->
+<!-- However, if you need more advanced features or are working with a large codebase, Tash may not be the right choice. -->
+
+## Advantages of Tash
 - Anyone with your repo cloned can run tests immediately
 - Has a nice UX
+- One file, "source it and go"
 - You get to write tests
 
-## Disadvantages of Tash 
-- Slower than other testing frameworks. Because of its philosophy, it can't use any extensions that are exclusive to Bash and similar.
+## Disadvantages of Tash
+- Limited feature set
 - You get to write tests
 
 ## Installation
