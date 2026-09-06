@@ -40,7 +40,35 @@ That is pretty much it. It allows you to write tests, in a portable manner. It i
 - You get to write tests
 
 ## Installation
-<!-- coming soon -->
+Tash cannot really be *"installed"* as a traditional package. It is a script, that you include in your project.
+There are two ways to do this:
+
+### Via `wget`
+Run this wherever you want to place the script:
+```shell
+wget https://raw.githubusercontent.com/emielster/tash/refs/heads/main/src/tash.sh
+```
+
+### Via tash.dev
+**Coming soon...**
+
+### Sourcing it
+
+Once you have the script, source it from your test script:
+```shell
+. ./path/to/tash.sh
+```
+And you're done!
+
+> [!TIP]
+> It is recommended to resolve the path relative to the test script's directory. This
+> ensures that Tash can *still* be found when the test script is executed from another working
+> directory.
+> ```shell
+> SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0"")" && pwd)
+> . $SCRIPT_DIR/relative/path/to/tash.sh/from/your/scripts/directory
+>```
+> See [tash-tests.sh](tests/tash-tests.sh) for an example.
 
 ## TODO
 

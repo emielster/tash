@@ -1,7 +1,9 @@
 #!/bin/sh
 
+# Find tash.sh relative to tests/
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 . "$SCRIPT_DIR/../src/tash.sh"
+# i.e. tests/../src/tash.sh which is correct at all times
 
 tash_init "$@"
 
@@ -13,8 +15,6 @@ tash_init "$@"
 #
 # For my fellow LazyVim users (like me):
 # :lua vim.b.autoformat = false
-
-
 
 
 # prettier-ignore
