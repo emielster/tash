@@ -70,8 +70,11 @@ And you're done!
 >```
 > See [tash-tests.sh](tests/tash-tests.sh) for an example.
 
+
 ## TODO
 
 - [ ] TAP/Junit compatibility for CI
 - [ ] Make documentation
+- [ ] Add ergonomic features/commands
+- [ ] Add Bash/Zsh extensions to a separate script, that overwrites the POSIX core
 

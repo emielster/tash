@@ -315,7 +315,9 @@ item "internal"
 end
 
 if [ $TASH_COUNT_FAILED -eq 0 ]; then
-    printf "tash ${TASH_BOLD_GREEN}finished${TASH_COLOR_RESET} internal checks without any errors!\n"
+    printf "${TASH_BOLD_WHITE}[🎉]${TASH_COLOR_RESET} tash ${TASH_BOLD_GREEN}FINISHED${TASH_COLOR_RESET} internal tests without ${TASH_BOLD_WHITE}any errors!${TASH_COLOR_RESET}\n"
+else
+	printf "${TASH_BOLD_WHITE}[❌]${TASH_COLOR_RESET} tash ${TASH_BOLD_RED}FAILED${TASH_COLOR_RESET} internal tests with ${TASH_BOLD_RED}${TASH_COUNT_FAILED} error(s)!${TASH_COLOR_RESET} uhoh!\n" >&2
 fi
 
 
@@ -476,6 +478,10 @@ item "external"
             fail "expected end to end $TASH_SCOPE 'should_not_log_inspect' scope"
         fi
 
+		item "make_me_a_test"
+			value 0
+		end
+		assert make_me_a_test -eq 0
     end
     item "value"
         item "argument_count"
@@ -555,11 +561,71 @@ item "external"
             assert make_me_a_test -eq 0
         end
     end
+
+	item "fail"
+        item "argument_count"
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; fail'
+            assert stderr contains "terminated"
+            assert stderr contains "E007"
+			assert stderr contains "expected atleast one argument (reason)"
+            check 7 ""
+        end
+        item "invalid_scope"
+            run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; fail "test"'
+            assert stderr contains "terminated"
+            assert stderr contains "E008"
+            assert stderr contains "cannot fail globally"
+            check 8 "create an item and fail in there"
+        end
+		temp=$(tash__mk_temp)
+
+		{
+            TEMP_TASH_COUNT_FAILED=$TASH_COUNT_FAILED
+			item "should_fail"
+				fail "hello from temp!"
+			end
+			TASH_COUNT_FAILED=$TEMP_TASH_COUNT_FAILED # We could go and assert here that it hasn't increased by one, but the
+													  # end tests already test that.
+		} 2> "$temp"
+
+		contents=$(cat "$temp")
+		rm -f "$temp"
+		case "$contents" in
+		*"hello from temp!"*) ;;
+		*) fail "expected end to print a failure message, but got: $contents" ;;
+		esac
+		item "make_me_a_test"
+			value 0
+		end
+
+		assert make_me_a_test -eq 0
+	end
+
+	item "assert"
+        item "argument_count"
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; assert'
+            assert stderr contains "terminated"
+            assert stderr contains "E009"
+			assert stderr contains "expected atleast two arguments (item, operator, [expected])"
+            check 9 ""
+        end
+        item "invalid_scope"
+            run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; assert non_existing_but_does_not_matter -eq 0'
+            assert stderr contains "terminated"
+            assert stderr contains "E010"
+            assert stderr contains "cannot assert globally"
+            check 10 "create an item and assert in there"
+        end
+	end
 end
 
+if [ $TASH_COUNT_FAILED -eq 0 ]; then
+    printf "${TASH_BOLD_WHITE}[🎉]${TASH_COLOR_RESET} tash ${TASH_BOLD_GREEN}FINISHED${TASH_COLOR_RESET} external tests without ${TASH_BOLD_WHITE}any errors!${TASH_COLOR_RESET}\n"
+else
+	printf "${TASH_BOLD_WHITE}[❌]${TASH_COLOR_RESET} tash ${TASH_BOLD_RED}FAILED${TASH_COLOR_RESET} external tests with ${TASH_BOLD_RED}${TASH_COUNT_FAILED} error(s)!${TASH_COLOR_RESET} uhoh!\n" >&2
+fi
 
 item "integration"
-
 end
 
 tash_end

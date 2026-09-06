@@ -580,7 +580,7 @@ assert() {
 		;;
 	esac
 
-	tash__get "${TASH_SCOPE}::__failed"
+	tash__get ""
 	if [ "$tash__gv" = "1" ] || [ "$TASH_MODE" = "preview" ]; then
 		return 0 # If already failed, you skip the remaining asserts OR if mode is preview
 	fi
