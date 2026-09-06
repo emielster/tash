@@ -15,6 +15,8 @@ tash_init "$@"
 # :lua vim.b.autoformat = false
 
 
+
+
 # prettier-ignore
 # shfmt:off
 item "internal"
@@ -125,7 +127,7 @@ item "internal"
 		end
 		item "default"
 			run tash__failure_message "exitcode" "unknown" "1" "2"
-			check 0 "expected exitcode unknown 1, but exitcode is 2"
+		check 0 "expected exitcode unknown 1, but exitcode is 2"
 			assert stderr -z
 		end
 	end

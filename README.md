@@ -34,6 +34,8 @@ That is pretty much it. It allows you to write tests, in a portable manner. It i
 - You get to write tests
 
 ## Disadvantages of Tash
+- Less mature
+- POSIX limitations (e.g. timing is limited to whole seconds)
 - Limited feature set
 - You get to write tests
 
