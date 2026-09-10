@@ -209,8 +209,8 @@ item "internal"
 		# run itself uses tash__var_name before we can check. This is one of
 		# those 1/1_000_000 cases where this happens. We'll use manual testing instead
 		tash__var_name "tests::hello::something"
-		if ! [ "$tash__vn" = "TASH_VAR_tests__hello__something" ]; then
-			fail "expected tash__vn = \"TASH_VAR_tests__hello__something\", but tash__vn is $tash__vn";
+		if ! [ "$TASH__vn" = "TASH_VAR_tests__hello__something" ]; then
+			fail "expected TASH__vn = \"TASH_VAR_tests__hello__something\", but TASH__vn is $TASH__vn";
 		fi
 		# We have no reliable way of checking stdout, stderr, and exitcode...
 		# so we use a quick workaround
@@ -234,7 +234,7 @@ item "internal"
 	item "tash__get"
 		# We'll test from the value set with tash__set
 		tash__get "tests::misc::something"
-		if ! [ "$tash__gv" = "5" ]; then
+		if ! [ "$TASH__gv" = "5" ]; then
 			fail "expected tash_gv = \"5\", but tash_gv is \"$tash_gv\""
 		fi
 		item make_me_a_test
@@ -500,8 +500,8 @@ item "external"
         esac
 
         tash__get "${TASH_SCOPE}::test"
-        if [ "$tash__gv" != "0" ]; then
-            fail "expected value to make $TASH_SCOPE::test 0, but $TASH_SCOPE::test is $tash__gv"
+        if [ "$TASH__gv" != "0" ]; then
+            fail "expected value to make $TASH_SCOPE::test 0, but $TASH_SCOPE::test is $TASH__gv"
         fi
 
         assert test -eq 0
@@ -530,7 +530,7 @@ item "external"
                 value 0
             end
             assert make_me_a_test -eq 0
-        end
+		end
         item "inspect_runs"
             TEMP_TASH_MODE=$TASH_MODE
             TEMP_TASH_INSPECTING_TEST=$TASH_INSPECTING_TEST
@@ -616,6 +616,125 @@ item "external"
             assert stderr contains "cannot assert globally"
             check 10 "create an item and assert in there"
         end
+		item "unknown_operator"
+            run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; item "test"; assert non_existing_but_does_not_matter -unknown 0; end'
+			assert stderr contains "terminated"
+			assert stderr contains "E011"
+			assert stderr contains "assert: unknown operator '-unknown'"
+			check 11 ""
+		end
+		tash__assert_test_ok() {
+			label=$1
+			op=$2
+			val=$3
+			expected=$4
+			TEMP_TASH_COUNT_SUCCEEDED=$TASH_COUNT_SUCCEEDED
+			temp=$(tash__mk_temp)
+			{
+				item "should_be_ok"
+					item my_value
+						value "$val"
+					end
+					assert my_value "$op" "$expected"
+				end
+			} >"$temp"
+			TASH_COUNT_SUCCEEDED=$TEMP_TASH_COUNT_SUCCEEDED
+			contents=$(cat "$temp")
+			rm -f "$temp"
+			case "$contents" in
+			*"${label}::should_be_ok succeeded!"*) ;;
+			*) fail "expected end to print a success message, but got: $contents" ;;
+			esac
+		}
+		item "eq"
+			tash__assert_test_ok "eq" "-eq" "0" "0"
+			item "make_me_a_test"
+				value 0
+			end
+
+			assert make_me_a_test -eq 0
+		end
+		item "ne"
+			tash__assert_test_ok "ne" "-ne" "0" "1"
+			item "make_me_a_test"
+				value 0
+			end
+
+			assert make_me_a_test -eq 0
+		end
+		item "gt"
+			tash__assert_test_ok "gt" "-gt" "0" "-1"
+			item "make_me_a_test"
+				value 0
+			end
+
+			assert make_me_a_test -eq 0
+		end
+		item "lt"
+			tash__assert_test_ok "lt" "-lt" "0" "1"
+			item "make_me_a_test"
+				value 0
+			end
+
+			assert make_me_a_test -eq 0
+		end
+		item "ge"
+			tash__assert_test_ok "ge" "-ge" "0" "0"
+			item "make_me_a_test"
+				value 0
+			end
+
+			assert make_me_a_test -eq 0
+		end
+		item "le"
+			tash__assert_test_ok "le" "-le" "0" "0"
+			item "make_me_a_test"
+				value 0
+			end
+
+			assert make_me_a_test -eq 0
+		end
+		item "zero"
+			tash__assert_test_ok "zero" "-z" "" ""
+			item "make_me_a_test"
+				value 0
+			end
+
+			assert make_me_a_test -eq 0
+		end
+		item "non_zero"
+			tash__assert_test_ok "non_zero" "-n" "hello" ""
+			item "make_me_a_test"
+				value 0
+			end
+
+			assert make_me_a_test -eq 0
+		end
+		item "contains"
+			tash__assert_test_ok "contains" "contains" "hello world" "hello"
+			item "make_me_a_test"
+				value 0
+			end
+
+			assert make_me_a_test -eq 0
+		end
+		item "string_equality"
+			tash__assert_test_ok "string_equality" "=" "hello" "hello"
+			item "make_me_a_test"
+				value 0
+			end
+
+			assert make_me_a_test -eq 0
+		end
+		item "string_inequality"
+			tash__assert_test_ok "string_inequality" "!=" "hello" "bye"
+
+			item "make_me_a_test"
+				value 0
+			end
+
+			assert make_me_a_test -eq 0
+		end
 	end
 end
 
@@ -626,6 +745,7 @@ else
 fi
 
 item "integration"
+
 end
 
 tash_end

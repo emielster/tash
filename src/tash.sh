@@ -24,8 +24,8 @@
 
 # Checks if a string is valid for Tash (item names, ...)
 tash__is_valid_name() {
-	name=$1
-	case $name in
+	TASH__name=$1
+	case $TASH__name in
 	'') return 1 ;;
 	*[!A-Za-z0-9_]*) return 1 ;;
 	*) return 0 ;;
@@ -34,31 +34,31 @@ tash__is_valid_name() {
 
 # A POSIX alternative to mktemp
 tash__mk_temp() {
-	dir=${TMPDIR:-/tmp}
-	i=0
+	TASH__dir=${TMPDIR:-/tmp}
+	TASH__i=0
 
 	while true; do
-		file="$dir/tash-${$}-${i}"
+		TASH__file="$TASH__dir/tash-${$}-${TASH__i}"
 
 		if (
-			set -C     # Sets noclobber on
-			: >"$file" # Creates $file
+			set -C           # Sets noclobber on
+			: >"$TASH__file" # Creates $file
 		) 2>/dev/null; then
-			printf "%s\n" "$file"
+			printf "%s\n" "$TASH__file"
 			return 0
 		fi
 
-		i=$((i + 1))
+		TASH__i=$((TASH__i + 1))
 	done
 }
 
 # Checks if a scope is an descendant of an ancestor
 tash__scope_is_descendant_of() {
-	scope=$1
-	ancestor=$2
-	case "$scope" in
-	"$ancestor") return 0 ;;
-	"$ancestor"::*) return 0 ;;
+	TASH__scope=$1
+	TASH__ancestor=$2
+	case "$TASH__scope" in
+	"$TASH__ancestor") return 0 ;;
+	"$TASH__ancestor"::*) return 0 ;;
 	*) return 1 ;;
 	esac
 }
@@ -76,37 +76,38 @@ tash__should_log() {
 
 # Creates a readable and natural failure message for the assert
 tash__failure_message() {
-	item=$1
-	op=$2
-	expected=$3
-	actual=$4
+	TASH__item=$1
+	TASH__op=$2
+	TASH__expected=$3
+	TASH__actual=$4
 
-	case "$op" in
+	case "$TASH__op" in
 	-z)
-		printf "expected %s to be empty, but it was \"%s\"" "$item" "$actual"
+		printf "expected %s to be empty, but it was \"%s\"" "$TASH__item" "$TASH__actual"
 		;;
 	-n)
-		printf "expected %s to be non-empty, but it was empty" "$item"
+		printf "expected %s to be non-empty, but it was empty" "$TASH__item"
 		;;
 	= | !=)
-		printf "expected %s %s \"%s\", but %s is \"%s\"" "$item" "$op" "$expected" "$item" "$actual"
+		printf "expected %s %s \"%s\", but %s is \"%s\"" "$TASH__item" "$TASH__op" "$TASH__expected" "$TASH__item" "$TASH__actual"
 		;;
 	contains)
-		printf "expected %s contains \"%s\", but %s is \"%s\"" "$item" "$expected" "$item" "$actual"
+		printf "expected %s contains \"%s\", but %s is \"%s\"" "$TASH__item" "$TASH__expected" "$TASH__item" "$TASH__actual"
 		;;
 	-eq | -ne | -gt | -lt | -ge | -le)
-		words=$(tash__op_to_words "$op")
-		printf "expected %s %s %s, but %s is %s" "$item" "$words" "$expected" "$item" "$actual"
+		TASH__words=$(tash__op_to_words "$TASH__op")
+		printf "expected %s %s %s, but %s is %s" "$TASH__item" "$TASH__words" "$TASH__expected" "$TASH__item" "$TASH__actual"
 		;;
 	*)
-		printf "expected %s %s %s, but %s is %s" "$item" "$op" "$expected" "$item" "$actual"
+		printf "expected %s %s %s, but %s is %s" "$TASH__item" "$TASH__op" "$TASH__expected" "$TASH__item" "$TASH__actual"
 		;;
 	esac
 
 }
 
 tash__op_to_words() {
-	case "$1" in
+	TASH__op=$1
+	case "$TASH__op" in
 	-eq) printf "==" ;;
 	-ne) printf "!=" ;;
 	-gt) printf ">" ;;
@@ -119,75 +120,75 @@ tash__op_to_words() {
 # Is the target the last child of the parent? Needed to decide whether to
 # draw +-- or |--
 tash__preview_is_last() {
-	target=$1
-	parent=${target%::*}
-	last=""
-	for p in $TASH_ITEM_PATHS; do
-		p_parent=${p%::*}
-		if [ "$p_parent" = "$parent" ]; then
-			last=$p
+	TASH__target=$1
+	TASH__parent=${TASH__target%::*}
+	TASH__last=""
+	for TASH__p in $TASH_ITEM_PATHS; do
+		TASH__p_parent=${TASH__p%::*}
+		if [ "$TASH__p_parent" = "$TASH__parent" ]; then
+			TASH__last=$TASH__p
 		fi
 	done
-	[ "$last" = "$target" ]
+	[ "$TASH__last" = "$TASH__target" ]
 }
 
 # Used to render a tree in preview mode
 tash__preview_tree() {
-	stack=""
+	TASH__stack=""
 	printf "tests\n"
-	for path in $TASH_ITEM_PATHS; do
-		depth=0
-		rest=$path
+	for TASH__path in $TASH_ITEM_PATHS; do
+		TASH__depth=0
+		TASH__rest=$TASH__path
 		# Calculate the depth by doing this kinda thing
-		while [ "$rest" != "${rest#*::}" ]; do
-			depth=$((depth + 1))
-			rest=${rest#*::}
+		while [ "$TASH__rest" != "${TASH__rest#*::}" ]; do
+			TASH__depth=$((TASH__depth + 1))
+			TASH__rest=${TASH__rest#*::}
 		done
 
 		# Shrink the stack to the current depth
-		new_stack=""
-		i=1
-		for flag in $stack; do
-			if [ "$i" -ge "$depth" ]; then
+		TASH__new_stack=""
+		TASH__i=1
+		for TASH__flag in $TASH__stack; do
+			if [ "$TASH__i" -ge "$TASH__depth" ]; then
 				break
 			fi
-			new_stack="$new_stack $flag"
-			i=$((i + 1))
+			TASH__new_stack="$TASH__new_stack $TASH__flag"
+			TASH__i=$((TASH__i + 1))
 		done
-		stack=$new_stack
+		TASH__stack=$TASH__new_stack
 
 		# Check if the path is the last child of its parent
-		if tash__preview_is_last "$path"; then
-			branch="+-- "
-			this_flag=1
+		if tash__preview_is_last "$TASH__path"; then
+			TASH__branch="+-- "
+			TASH__this_flag=1
 		else
-			branch="|-- "
-			this_flag=0
+			TASH__branch="|-- "
+			TASH__this_flag=0
 		fi
 
 		# For each flag in the stack, if it already ended (1) don't use
 		# a pipe, otherwise (0) use a pipe
-		prefix=""
-		for flag in $stack; do
-			if [ "$flag" = "1" ]; then
-				prefix="${prefix}    "
+		TASH__prefix=""
+		for TASH__flag in $TASH__stack; do
+			if [ "$TASH__flag" = "1" ]; then
+				TASH__prefix="${TASH__prefix}    "
 			else
-				prefix="${prefix}│   "
+				TASH__prefix="${TASH__prefix}│   "
 			fi
 		done
 
-		name=${path##*::}
+		TASH__name=${TASH__path##*::}
 		case " $TASH_VALUE_PATHS " in
-		*" $path "*)
-			tash__get "$path"
-			printf "%s%s%s = %s\n" "$prefix" "$branch" "$name" "$tash__gv"
+		*" $TASH__path "*)
+			tash__get "$TASH__path"
+			printf "%s%s%s = %s\n" "$TASH__prefix" "$TASH__branch" "$TASH__name" "$TASH__gv"
 			;;
 		*)
-			printf "%s%s%s\n" "$prefix" "$branch" "$name"
+			printf "%s%s%s\n" "$TASH__prefix" "$TASH__branch" "$TASH__name"
 			;;
 		esac
 
-		stack="$stack $this_flag"
+		TASH__stack="$TASH__stack $TASH__this_flag"
 	done
 }
 
@@ -199,26 +200,26 @@ tash__preview_tree() {
 # (no + on each line, because that requires way too much work and
 # possible external dependencies to handle Unicode)
 tash__window() {
-	title=$1
+	TASH__title=$1
 	shift
 
-	top="+-- $title -+"
-	width=${#top}
-	dash_count=$((width - 2))
+	TASH__top="+-- $TASH__title -+"
+	TASH__width=${#TASH__top}
+	TASH__dash_count=$((TASH__width - 2))
 
-	bottom="+"
-	i=0
-	while [ "$i" -lt "$dash_count" ]; do
-		bottom="${bottom}-"
-		i=$((i + 1))
+	TASH__bottom="+"
+	TASH__i=0
+	while [ "$TASH__i" -lt "$TASH__dash_count" ]; do
+		TASH__bottom="${TASH__bottom}-"
+		TASH__i=$((TASH__i + 1))
 	done
-	bottom="${bottom}+"
+	TASH__bottom="${TASH__bottom}+"
 
-	printf "%s\n" "$top"
-	for line in "$@"; do
-		printf "| %s\n" "$line"
+	printf "%s\n" "$TASH__top"
+	for TASH__line in "$@"; do
+		printf "| %s\n" "$TASH__line"
 	done
-	printf "%s\n" "$bottom"
+	printf "%s\n" "$TASH__bottom"
 }
 
 # We use a var type of registry because this is POSIX compliant, we can't use
@@ -228,19 +229,19 @@ TASH_VALUE_PATHS=""
 # Converts "tests::hello::something" to "TASH_VAR_tests__hello__something", which is valid as an
 # environment variable
 tash__var_name() {
-	name=$1
-	result=""
+	TASH__name=$1
+	TASH__result=""
 	# This is much faster than launching a subshell everytime.
-	while [ "$name" != "${name#*::}" ]; do
-		result="${result}${name%%::*}__"
-		name=${name#*::}
+	while [ "$TASH__name" != "${TASH__name#*::}" ]; do
+		TASH__result="${TASH__result}${TASH__name%%::*}__"
+		TASH__name=${TASH__name#*::}
 	done
-	tash__vn="TASH_VAR_${result}${name}"
+	TASH__vn="TASH_VAR_${TASH__result}${TASH__name}"
 }
 
 tash__set() {
 	tash__var_name "$1"
-	eval "$tash__vn=\$2"          # From my LSP: "Don't use $ on the left side of assignments.". Therefore, this is in an eval command.
+	eval "$TASH__vn=\$2"          # From my LSP: "Don't use $ on the left side of assignments.". Therefore, this is in an eval command.
 	case " $TASH_VALUE_PATHS " in # Add the value to TASH_VALUE_PATHS if it doesn't already exist, for preview mode
 	*" $1 "*) ;;
 	*) TASH_VALUE_PATHS="$TASH_VALUE_PATHS $1" ;;
@@ -248,7 +249,7 @@ tash__set() {
 }
 tash__get() {
 	tash__var_name "$1"
-	eval "tash__gv=\$$tash__vn"
+	eval "TASH__gv=\$$TASH__vn"
 }
 
 # See more at: https://gist.github.com/JBlond/2fea43a3049b38287e5e9cefc87b2124 (\e means \033, \e is a Bash/zsh extension)
@@ -259,14 +260,14 @@ TASH_BOLD_WHITE="\033[1;37m"
 TASH_COLOR_RESET="\033[0m"
 
 tash__log() {
-	label="$1"
-	color="$2"
-	message="$3"
-	is_error="$4"
-	if [ -n "$is_error" ]; then
-		printf "${TASH_BOLD_WHITE}[${color}${label}${TASH_BOLD_WHITE}] ${TASH_COLOR_RESET}%s\n" "$message" >&2
+	TASH__label="$1"
+	TASH__color="$2"
+	TASH__message="$3"
+	TASH__is_error="$4"
+	if [ -n "$TASH__is_error" ]; then
+		printf "${TASH_BOLD_WHITE}[${TASH__color}${TASH__label}${TASH_BOLD_WHITE}] ${TASH_COLOR_RESET}%s\n" "$TASH__message" >&2
 	else
-		printf "${TASH_BOLD_WHITE}[${color}${label}${TASH_BOLD_WHITE}] ${TASH_COLOR_RESET}%s\n" "$message"
+		printf "${TASH_BOLD_WHITE}[${TASH__color}${TASH__label}${TASH_BOLD_WHITE}] ${TASH_COLOR_RESET}%s\n" "$TASH__message"
 	fi
 }
 tash__success() {
@@ -290,11 +291,11 @@ tash__failure() {
 # E017 correlates to 17. This neat mechanism makes it that you can search up your error
 # in Tash's documentation directly from the exit code.
 tash__terminate() {
-	code="$1"
-	printf "tash ${TASH_BOLD_RED}terminated${TASH_COLOR_RESET} with error code ${TASH_BOLD_WHITE}E%03d${TASH_COLOR_RESET}\n" "$code" >&2
-	printf "info: visit ${TASH_BOLD_WHITE}https://tash.dev/error/E%03d${TASH_COLOR_RESET} for more information\n" "$code" >&2
+	TASH__code="$1"
+	printf "tash ${TASH_BOLD_RED}terminated${TASH_COLOR_RESET} with error code ${TASH_BOLD_WHITE}E%03d${TASH_COLOR_RESET}\n" "$TASH__code" >&2
+	printf "info: visit ${TASH_BOLD_WHITE}https://tash.dev/error/E%03d${TASH_COLOR_RESET} for more information\n" "$TASH__code" >&2
 
-	exit "$code"
+	exit "$TASH__code"
 }
 TASH_E_ITEM_ARGUMENT_COUNT=1 # e.g. https://tash.dev/error/E001
 TASH_E_ITEM_INVALID_NAME=2
@@ -388,11 +389,11 @@ end() {
 			case " $TASH_TESTS " in
 			*" $TASH_SCOPE "*)
 				tash__get "${TASH_SCOPE}::__failed"
-				if [ "$tash__gv" = "1" ]; then
+				if [ "$TASH__gv" = "1" ]; then
 					TASH_COUNT_FAILED=$((TASH_COUNT_FAILED + 1))
 					TASH_FAILED_TESTS="$TASH_FAILED_TESTS $TASH_SCOPE"
 					tash__get "${TASH_SCOPE}::__failmessage"
-					tash__failure "$tash__gv"
+					tash__failure "$TASH__gv"
 				else
 					TASH_COUNT_SUCCEEDED=$((TASH_COUNT_SUCCEEDED + 1))
 					tash__success "$TASH_SCOPE succeeded!"
@@ -463,9 +464,9 @@ run() {
 	"$@" 1>"$TASH_TMP_STDOUT" 2>"$TASH_TMP_STDERR" # Temporarily move 1 (stdout) to a temporary file made with mktemp, the same for
 	# with 2 (stderr)
 
-	code=$?
+	TASH__code=$?
 	item "exitcode"
-	value "$code"
+	value "$TASH__code"
 	end
 	item "stdout"
 	value "$(cat "$TASH_TMP_STDOUT")"
@@ -514,7 +515,7 @@ fail() {
 	fi
 
 	tash__get "${TASH_SCOPE}::__failed"
-	if [ "$tash__gv" = "1" ] || [ "$TASH_MODE" = "preview" ]; then
+	if [ "$TASH__gv" = "1" ] || [ "$TASH_MODE" = "preview" ]; then
 		return 0
 	fi
 
@@ -569,46 +570,46 @@ assert() {
 	fi
 	case $1 in
 	-z | -n)
-		op=$1
-		item=$2
-		expected=""
+		TASH__op=$1
+		TASH__item=$2
+		TASH__expected=""
 		;;
 	*)
-		item=$1
-		op=$2
-		expected=$3
+		TASH__item=$1
+		TASH__op=$2
+		TASH__expected=$3
 		;;
 	esac
 
-	tash__get ""
-	if [ "$tash__gv" = "1" ] || [ "$TASH_MODE" = "preview" ]; then
-		return 0 # If already failed, you skip the remaining asserts OR if mode is preview
+	tash__get "${TASH_SCOPE}::__failed"
+	if [ "$TASH__gv" = "1" ] || [ "$TASH_MODE" = "preview" ]; then
+		return # If already failed, you skip the remaining asserts OR if mode is preview
 	fi
 
-	resolved="${TASH_SCOPE}::${item}"
-	tash__get "$resolved"
-	actual=$tash__gv
+	TASH__resolved="${TASH_SCOPE}::${TASH__item}"
+	tash__get "$TASH__resolved"
+	TASH__actual=$TASH__gv
 
-	ok=0
-	case "$op" in
+	TASH__ok=0
+	case "$TASH__op" in
 	= | != | -eq | -ne | -gt | -lt | -ge | -le)
-		[ "$actual" "$op" "$expected" ] && ok=1
+		[ "$TASH__actual" "$TASH__op" "$TASH__expected" ] && TASH__ok=1
 		;;
 	-z | -n)
-		[ "$op" "$actual" ] && ok=1
+		[ "$TASH__op" "$TASH__actual" ] && TASH__ok=1
 		;;
 	contains)
-		case "$actual" in *"$expected"*) ok=1 ;; esac
+		case "$TASH__actual" in *"$TASH__expected"*) TASH__ok=1 ;; esac
 		;;
 	*)
-		tash__error "assert: unknown opertor '$op'"
+		tash__error "assert: unknown operator '$TASH__op'"
 		tash__terminate "$TASH_E_ASSERT_UNKNOWN_OPERATOR"
 		;;
 	esac
 
-	if [ "$ok" = "1" ]; then return 0; fi
+	if [ "$TASH__ok" = "1" ]; then return 0; fi
 
-	fail "$(tash__failure_message "$item" "$op" "$expected" "$actual")"
+	fail "$(tash__failure_message "$TASH__item" "$TASH__op" "$TASH__expected" "$TASH__actual")"
 
 }
 
@@ -687,7 +688,7 @@ tash_print() {
 	fi
 
 	tash__get "${TASH_SCOPE}::$1"
-	printf "%s\n" "$tash__gv"
+	printf "%s\n" "$TASH__gv"
 }
 
 # Use this to initialize Tash, preferably with all the arguments of your program passed into it.
@@ -774,33 +775,33 @@ tash_end() {
 	fi
 
 	TASH_END=$(date +%s)
-	elapsed=$((TASH_END - TASH_START))
-	tash__results "${TASH_COUNT_SUCCEEDED} succeeded, ${TASH_COUNT_FAILED} failed, ${TASH_COUNT_IGNORED} ignored (took ${elapsed}s)"
+	TASH__elapsed=$((TASH_END - TASH_START))
+	tash__results "${TASH_COUNT_SUCCEEDED} succeeded, ${TASH_COUNT_FAILED} failed, ${TASH_COUNT_IGNORED} ignored (took ${TASH__elapsed}s)"
 
 	if [ "$TASH_MODE" = "inspect" ]; then
-		for path in $TASH_ITEM_PATHS; do
-			if tash__scope_is_descendant_of "$path" "$TASH_INSPECTING_TEST"; then
+		for TASH__path in $TASH_ITEM_PATHS; do
+			if tash__scope_is_descendant_of "$TASH__path" "$TASH_INSPECTING_TEST"; then
 				case " $TASH_VALUE_PATHS " in
-				*" $path "*)
-					tash__get "$path"
-					tash__window "inspection: $path" "${tash__gv:-"(empty)"}"
+				*" $TASH__path "*)
+					tash__get "$TASH__path"
+					tash__window "inspection: $TASH__path" "${TASH__gv:-"(empty)"}"
 					;;
 				esac
 			fi
 		done
 
 	else
-		for path in $TASH_FAILED_TESTS; do
-			tash__get "${path}::__failscope"
-			run_scope=$tash__gv
-			tash__get "${run_scope}::stdout"
-			stdout=$tash__gv
-			tash__get "${run_scope}::stderr"
-			stderr=$tash__gv
-			if [ -n "$stdout" ] || [ -n "$stderr" ]; then
-				tash__window "$path" \
-					"$(printf "stdout: %s" "${stdout:-"(empty)"}")" \
-					"$(printf "stderr: %s" "${stderr:-"(empty)"}")"
+		for TASH__path in $TASH_FAILED_TESTS; do
+			tash__get "${TASH__path}::__failscope"
+			TASH__run_scope=$TASH__gv
+			tash__get "${TASH__run_scope}::stdout"
+			TASH__stdout=$TASH__gv
+			tash__get "${TASH__run_scope}::stderr"
+			TASH__stderr=$TASH__gv
+			if [ -n "$TASH__stdout" ] || [ -n "$TASH__stderr" ]; then
+				tash__window "$TASH__path" \
+					"$(printf "stdout: %s" "${TASH__stdout:-"(empty)"}")" \
+					"$(printf "stderr: %s" "${TASH__stderr:-"(empty)"}")"
 				printf "\n"
 			fi
 		done
