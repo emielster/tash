@@ -945,7 +945,6 @@ else
 fi
 
 item "integration"
-
 end
 
 tash_end
