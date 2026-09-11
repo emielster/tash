@@ -314,7 +314,8 @@ TASH_E_TASH_PRINT_ARGUMENT_COUNT=14
 TASH_E_TASH_INIT_UNKNOWN_ARGUMENT=15
 TASH_E_TASH_INIT_ARGUMENT_COUNT=16
 TASH_E_TASH_END_INVALID_SCOPE=17
-TASH_E_TASH_END_TESTS_FAILED=18
+TASH_E_TASH_END_ARGUMENT_COUNT=18
+TASH_E_TASH_END_TESTS_FAILED=19
 # In Bash, you would use an array, but since Tash should work with **any**
 # POSIX-compliant shell, we can't use any of the Bash extensions, including arrays.
 TASH_SCOPE="tests" # Start at the tests scope. Treat this as the global scope for everything.
@@ -710,11 +711,11 @@ tash_init() {
 				tash__terminate "$TASH_E_TASH_INIT_ARGUMENT_COUNT"
 			fi
 			TASH_MODE="inspect"
-			TASH_INSPECTING_TEST="tests::$2"
+			TASH_INSPECTING_TEST="$2"
 			;;
 		-V | --version)
 			printf "tash ${TASH_BOLD_WHITE}v0.1.1${TASH_COLOR_RESET} (semver)\n"
-			tash__hint "run $0 --h | --help for help"
+			tash__hint "run $0 -h | --help for help"
 			exit 0
 			;;
 		-h | --help)
@@ -764,6 +765,10 @@ tash_init() {
 #
 # ```
 tash_end() {
+	if [ $# -ne 0 ]; then
+		tash__error "tash_end: expected zero arguments"
+		tash__terminate "$TASH_E_TASH_END_ARGUMENT_COUNT"
+	fi
 	if ! [ "$TASH_SCOPE" = "tests" ]; then
 		tash__error "tash_end: scope must be exactly \"tests\""
 		tash__hint "tash_end: did you forget to end one of your items?"

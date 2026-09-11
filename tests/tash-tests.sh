@@ -736,6 +736,206 @@ item "external"
 			assert make_me_a_test -eq 0
 		end
 	end
+	item "check"
+        item "argument_count"
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; check'
+            assert stderr contains "terminated"
+            assert stderr contains "E012"
+			assert stderr contains "expected one to three arguments (exitcode, [stdout], [stderr])"
+            check 12 ""
+        end
+		# You could go and test it too, but under the hood,
+		# it is just assert 3x times in one function.
+		# Not really worth it IMHO, since assert is already
+		# tested.
+	end
+	item "tash_fmt"
+		item "argument_count"
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_fmt'
+            assert stderr contains "terminated"
+            assert stderr contains "E013"
+			assert stderr contains "expected exactly one argument (string)"
+            check 13 ""
+		end
+		
+		run printf "item1\nitem2"
+		check 0 "$(tash_fmt "item1\nitem2")"
+	
+	end
+	item "tash_print"
+		item "argument_count"
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_print'
+            assert stderr contains "terminated"
+            assert stderr contains "E014"
+			assert stderr contains "expected exactly one argument (item)"
+            check 14 ""
+		end
+
+		item "test"	
+			value "hello!"
+		end
+
+		raw_value_test=$(tash_print "test")
+		if [ "$raw_value_test" != "hello!" ]; then
+			fail "expected tash_print to print the value of test, but got: $raw_value_test"
+		fi
+
+		item "make_me_a_test"
+			value 0
+		end
+
+		assert make_me_a_test -eq 0
+	end
+
+	item "tash_init"
+		item "argument_count_inspect"	
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_init --inspect'
+            assert stderr contains "terminated"
+            assert stderr contains "E016"
+			assert stderr contains "you must specify exactly one test that you want to inspect"
+            check 16 "run sh -h | --help for help"
+		end
+		item "unknown_argument"
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_init unknown'
+            assert stderr contains "terminated"
+            assert stderr contains "E015"
+			assert stderr contains "unknown argument 'unknown'"
+            check 15 "run sh -h | --help for help"
+		end
+		item "preview"
+			TEMP_TASH_MODE=$TASH_MODE
+			tash_init --preview
+			if [ "$TASH_MODE" != "preview" ]; then
+				fail "expected tash_init --preview to set TASH_MODE to preview, but got: $TASH_MODE"
+			fi
+			TASH_MODE=$TEMP_TASH_MODE
+			item "make_me_a_test"
+				value 0
+			end
+			assert make_me_a_test -eq 0
+		end
+		item "inspect"
+			TEMP_TASH_MODE=$TASH_MODE
+			TEMP_TASH_INSPECTING_TEST=$TASH_INSPECTING_TEST
+			tash_init --inspect "tests::a_test"
+			
+			if [ "$TASH_MODE" != "inspect" ]; then
+				fail "expected tash_init --inspect to set TASH_MODE to inspect, but got: $TASH_MODE"
+			fi
+			if [ "$TASH_INSPECTING_TEST" != "tests::a_test" ]; then
+				fail "expected tash_init --inspect to set TASH_INSPECTING_TEST to tests::a_test, but got: $TASH_INSPECTING_TEST"
+			fi
+			
+			TASH_MODE=$TEMP_TASH_MODE
+			TASH_INSPECTING_TEST=$TEMP_TASH_INSPECTING_TEST
+			item "make_me_a_test"
+				value 0
+			end
+			assert make_me_a_test -eq 0
+		end
+		item "version"
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_init -V'
+			assert stdout contains "run sh -h | --help for help"
+			check 0 "v" 
+		end
+		item "help"
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_init -h'
+			assert stdout contains "https://github.com/emielster/tash"
+			assert stdout contains "https://tash.dev"
+			assert stdout contains "Tash"
+			assert stdout contains "Usage:"
+			assert stdout contains "Options:"
+			# ...
+			check 0 
+		end
+	end
+	item "tash_end"
+		item "argument_count"
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_end hello'
+            assert stderr contains "terminated"
+            assert stderr contains "E018"
+			assert stderr contains "expected zero arguments"
+            check 18 ""
+		end
+
+		item "invalid_scope"	
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; item "scope"; tash_end'
+            assert stderr contains "terminated"
+            assert stderr contains "E017"
+			assert stderr contains "scope must be exactly \"tests\""
+            check 17 "did you forget to end one of your items?"
+		end
+
+		item "test_failed"
+			temp=$(tash__mk_temp)
+			TEMP_TASH_COUNT_FAILED=$TASH_COUNT_FAILED
+			TEMP_TASH_SCOPE=$TASH_SCOPE
+			TASH_COUNT_FAILED=1
+			TASH_SCOPE="tests"
+			(
+				tash_end
+			) >"$temp"
+			contents=$(cat "$temp")
+			rm -f "$temp"
+			TASH_SCOPE="$TEMP_TASH_SCOPE"
+			TASH_COUNT_FAILED=$TEMP_TASH_COUNT_FAILED
+			case "$contents" in
+			*"1 failed"*) ;;
+			*) fail "expected tash_end to print a result message with 1 failure, but got: $contents" ;;
+			esac
+			
+			item "make_me_a_test"
+				value 0
+			end	
+			assert make_me_a_test -eq 0
+		end
+		item "test_succeeded"
+			temp=$(tash__mk_temp)
+			TEMP_TASH_COUNT_SUCCEEDED=$TASH_COUNT_SUCCEEDED
+			TEMP_TASH_SCOPE=$TASH_SCOPE
+			TASH_COUNT_SUCCEEDED=1
+			TASH_SCOPE="tests"
+			(
+				tash_end
+			) >"$temp"
+			contents=$(cat "$temp")
+			rm -f "$temp"
+			TASH_SCOPE="$TEMP_TASH_SCOPE"
+			TASH_COUNT_SUCCEEDED=$TEMP_TASH_COUNT_SUCCEEDED
+			case "$contents" in
+			*"1 succeeded"*) ;;
+			*) fail "expected tash_end to print a result message with 1 succeeded, but got: $contents" ;;
+			esac
+			
+			item "make_me_a_test"
+				value 0
+			end	
+			assert make_me_a_test -eq 0
+		end
+		item "test_ignored"
+			temp=$(tash__mk_temp)
+			TEMP_TASH_COUNT_IGNORED=$TASH_COUNT_IGNORED
+			TEMP_TASH_SCOPE=$TASH_SCOPE
+			TASH_COUNT_IGNORED=1
+			TASH_SCOPE="tests"
+			(
+				tash_end
+			) >"$temp"
+			contents=$(cat "$temp")
+			rm -f "$temp"
+			TASH_SCOPE="$TEMP_TASH_SCOPE"
+			TASH_COUNT_IGNORED=$TEMP_TASH_COUNT_IGNORED
+			case "$contents" in
+			*"1 ignored"*) ;;
+			*) fail "expected tash_end to print a result message with 1 ignored, but got: $contents" ;;
+			esac
+			
+			item "make_me_a_test"
+				value 0
+			end	
+			assert make_me_a_test -eq 0
+		end
+	end
 end
 
 if [ $TASH_COUNT_FAILED -eq 0 ]; then
