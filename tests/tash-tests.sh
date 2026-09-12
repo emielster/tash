@@ -944,7 +944,5 @@ else
 	printf "${TASH_BOLD_WHITE}[❌]${TASH_COLOR_RESET} tash ${TASH_BOLD_RED}FAILED${TASH_COLOR_RESET} external tests with ${TASH_BOLD_RED}${TASH_COUNT_FAILED} error(s)!${TASH_COLOR_RESET} uhoh!\n" >&2
 fi
 
-item "integration"
-end
-
+# TODO: write integration tests
 tash_end
