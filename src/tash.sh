@@ -22,6 +22,10 @@
 # In a future version of Tash, I might develop an option called TASH_USE_BASH_EXTENSIONS that when set to 1,
 # enables us to benefit of Bash's extensions.
 
+if [ -n "$ZSH_VERSION" ]; then
+	emulate sh # If you are running zsh, make sure zsh follows POSIX and
+	# doesn't use its own dialect.
+fi
 # Checks if a string is valid for Tash (item names, ...)
 tash__is_valid_name() {
 	TASH__name=$1
@@ -299,8 +303,8 @@ tash__terminate() {
 }
 TASH_E_ITEM_ARGUMENT_COUNT=1 # e.g. https://tash.dev/error/E001
 TASH_E_ITEM_INVALID_NAME=2
-TASH_E_END_ARGUMENT_COUNT=3
-TASH_E_END_INVALID_SCOPE=4
+TASH_E_METI_ARGUMENT_COUNT=3
+TASH_E_METI_INVALID_SCOPE=4
 TASH_E_VALUE_ARGUMENT_COUNT=5
 TASH_E_RUN_ARGUMENT_COUNT=6
 TASH_E_FAIL_ARGUMENT_COUNT=7
@@ -329,7 +333,7 @@ TASH_MODE="run"
 #
 # item my_item # Create item "my_item" inside of the scope "tests"
 #
-# end
+# meti
 #
 # # --snip--
 # ```
@@ -365,21 +369,21 @@ item() {
 #
 # # Scope is "tests::my_test"
 #
-# end # End my_test's scope.
+# meti # End my_test's scope.
 #
 # # Scope is "tests"
 #
 # # --snip--
 # ```
-end() {
+meti() {
 	if [ $# -ne 0 ]; then
-		tash__error "end: expected zero arguments"
-		tash__terminate "$TASH_E_END_ARGUMENT_COUNT"
+		tash__error "meti: expected zero arguments"
+		tash__terminate "$TASH_E_METI_ARGUMENT_COUNT"
 	fi
 
 	if [ "$TASH_SCOPE" = "tests" ]; then
-		tash__error "end: cannot exit out of the global scope"
-		tash__terminate "$TASH_E_END_INVALID_SCOPE"
+		tash__error "meti: cannot exit out of the global scope"
+		tash__terminate "$TASH_E_METI_INVALID_SCOPE"
 	fi
 
 	case " $TASH_TESTS " in
@@ -416,7 +420,7 @@ end() {
 # # --snip--
 # item my_value
 #     value 5 # tests::my_value is now set to 5
-# end
+# meti
 # # --snip--
 # ```
 value() {
@@ -437,7 +441,7 @@ value() {
 #
 # item my_test
 #    run ./myscript.sh arg1 arg2 # my_test::stdout, my_test::stderr and my_test::exitcode are all set after this command
-# end
+# meti
 #
 # ```
 TASH_TMP_STDOUT=""
@@ -450,11 +454,11 @@ run() {
 
 	if [ "$TASH_MODE" = "preview" ]; then
 		item "exitcode"
-		end
+		meti
 		item "stdout"
-		end
+		meti
 		item "stderr"
-		end
+		meti
 		return # We don't want to run any command in preview mode.
 	fi
 
@@ -468,13 +472,13 @@ run() {
 	TASH__code=$?
 	item "exitcode"
 	value "$TASH__code"
-	end
+	meti
 	item "stdout"
 	value "$(cat "$TASH_TMP_STDOUT")"
-	end
+	meti
 	item "stderr"
 	value "$(cat "$TASH_TMP_STDERR")"
-	end
+	meti
 
 }
 
@@ -545,7 +549,7 @@ fail() {
 #	 assert stdout = "hello" # my_test is now a test
 #	 assert exitcode -eq 0
 #	 asset stdout contains "lo"
-# end
+# meti
 #
 # # --snip--
 # ```
