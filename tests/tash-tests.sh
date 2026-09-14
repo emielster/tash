@@ -314,10 +314,12 @@ item "internal"
 	emit
 emit
 
-if [ $TASH_COUNT_FAILED -eq 0 ]; then
-    printf "${TASH_BOLD_WHITE}[🎉]${TASH_COLOR_RESET} tash ${TASH_BOLD_GREEN}FINISHED${TASH_COLOR_RESET} internal tests without ${TASH_BOLD_WHITE}any errors!${TASH_COLOR_RESET}\n"
-else
-	printf "${TASH_BOLD_WHITE}[❌]${TASH_COLOR_RESET} tash ${TASH_BOLD_RED}FAILED${TASH_COLOR_RESET} internal tests with ${TASH_BOLD_RED}${TASH_COUNT_FAILED} error(s)!${TASH_COLOR_RESET} uhoh!\n" >&2
+if tash__should_log; then
+	if [ $TASH_COUNT_FAILED -eq 0 ]; then
+		printf "${TASH_BOLD_WHITE}[🎉]${TASH_COLOR_RESET} tash ${TASH_BOLD_GREEN}FINISHED${TASH_COLOR_RESET} internal tests without ${TASH_BOLD_WHITE}any errors!${TASH_COLOR_RESET}\n"
+	else
+		printf "${TASH_BOLD_WHITE}[❌]${TASH_COLOR_RESET} tash ${TASH_BOLD_RED}FAILED${TASH_COLOR_RESET} internal tests with ${TASH_BOLD_RED}${TASH_COUNT_FAILED} error(s)!${TASH_COLOR_RESET} uhoh!\n" >&2
+	fi
 fi
 
 
@@ -938,10 +940,12 @@ item "external"
 	emit
 emit
 
-if [ $TASH_COUNT_FAILED -eq 0 ]; then
-    printf "${TASH_BOLD_WHITE}[🎉]${TASH_COLOR_RESET} tash ${TASH_BOLD_GREEN}FINISHED${TASH_COLOR_RESET} external tests without ${TASH_BOLD_WHITE}any errors!${TASH_COLOR_RESET}\n"
-else
-	printf "${TASH_BOLD_WHITE}[❌]${TASH_COLOR_RESET} tash ${TASH_BOLD_RED}FAILED${TASH_COLOR_RESET} external tests with ${TASH_BOLD_RED}${TASH_COUNT_FAILED} error(s)!${TASH_COLOR_RESET} uhoh!\n" >&2
+if tash__should_log; then
+	if [ $TASH_COUNT_FAILED -eq 0 ] && tash__should_log;  then
+		printf "${TASH_BOLD_WHITE}[🎉]${TASH_COLOR_RESET} tash ${TASH_BOLD_GREEN}FINISHED${TASH_COLOR_RESET} external tests without ${TASH_BOLD_WHITE}any errors!${TASH_COLOR_RESET}\n"
+	else
+		printf "${TASH_BOLD_WHITE}[❌]${TASH_COLOR_RESET} tash ${TASH_BOLD_RED}FAILED${TASH_COLOR_RESET} external tests with ${TASH_BOLD_RED}${TASH_COUNT_FAILED} error(s)!${TASH_COLOR_RESET} uhoh!\n" >&2
+	fi
 fi
 
 

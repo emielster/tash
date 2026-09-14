@@ -219,11 +219,11 @@ tash__window() {
 	done
 	TASH__bottom="${TASH__bottom}+"
 
-	printf "%s\n" "$TASH__top"
+	printf "${TASH_LIGHT}%s${TASH_COLOR_RESET}\n" "$TASH__top"
 	for TASH__line in "$@"; do
-		printf "| %s\n" "$TASH__line"
+		printf "${TASH_LIGHT}|${TASH_COLOR_RESET} %s\n" "$TASH__line"
 	done
-	printf "%s\n" "$TASH__bottom"
+	printf "${TASH_LIGHT}%s${TASH_COLOR_RESET}\n" "$TASH__bottom"
 }
 
 # We use a var type of registry because this is POSIX compliant, we can't use
@@ -261,6 +261,7 @@ TASH_BOLD_RED="\033[1;31m" # NOTE: not all colors are defined, only the colors t
 TASH_BOLD_GREEN="\033[1;32m"
 TASH_BOLD_YELLOW="\033[1;33m"
 TASH_BOLD_WHITE="\033[1;37m"
+TASH_LIGHT="\033[38;5;247m"
 TASH_COLOR_RESET="\033[0m"
 
 tash__log() {
@@ -281,7 +282,13 @@ tash__error() {
 	tash__log "err" "$TASH_BOLD_RED" "$*" 1
 }
 tash__results() {
-	tash__log "results" "$TASH_BOLD_YELLOW" "$*"
+	# Needed because I use tash__results with color, and otherwise it would just
+	# print the ANSI escape codes directly, which is not what we want.
+	# You could do that for each of the tash log funcs, for consistensy, but thats
+	# really not what we want because it is worse performance wise (forking a subshell takes time)
+
+	# Feel free to add them, or change anything if you found a better way.
+	tash__log "results" "$TASH_BOLD_YELLOW" "$(tash_fmt "$*")"
 }
 tash__hint() {
 	tash__log "hint" "$TASH_BOLD_YELLOW" "$*"
@@ -398,10 +405,19 @@ emit() {
 					TASH_COUNT_FAILED=$((TASH_COUNT_FAILED + 1))
 					TASH_FAILED_TESTS="$TASH_FAILED_TESTS $TASH_SCOPE"
 					tash__get "${TASH_SCOPE}::__failmessage"
-					tash__failure "$TASH__gv"
+					if [ "$TASH_MODE" = "tap" ]; then
+						TASH_OUTPUT_STREAM="${TASH_OUTPUT_STREAM}\nnot ok ${TASH_TOTAL_TEST_COUNT} - ${TASH__gv}"
+					else
+						tash__failure "$TASH__gv"
+					fi
+
 				else
 					TASH_COUNT_SUCCEEDED=$((TASH_COUNT_SUCCEEDED + 1))
-					tash__success "$TASH_SCOPE succeeded!"
+					if [ "$TASH_MODE" = "tap" ]; then
+						TASH_OUTPUT_STREAM="${TASH_OUTPUT_STREAM}\nok ${TASH_TOTAL_TEST_COUNT} - ${TASH_SCOPE} succeeded!"
+					else
+						tash__success "$TASH_SCOPE succeeded!"
+					fi
 				fi
 
 				;;
@@ -498,6 +514,7 @@ TASH_FAILED_TESTS=""
 TASH_COUNT_SUCCEEDED=0
 TASH_COUNT_FAILED=0
 TASH_COUNT_IGNORED=0
+TASH_TOTAL_TEST_COUNT=0
 fail() {
 	if [ $# -lt 1 ]; then
 		tash__error "fail: expected atleast one argument (reason)"
@@ -512,7 +529,10 @@ fail() {
 
 	case " $TASH_TESTS " in
 	*" $TASH_SCOPE "*) ;;
-	*) TASH_TESTS="$TASH_TESTS $TASH_SCOPE" ;;
+	*)
+		TASH_TESTS="$TASH_TESTS $TASH_SCOPE"
+		TASH_TOTAL_TEST_COUNT=$((TASH_TOTAL_TEST_COUNT + 1))
+		;;
 	esac
 
 	if [ "$TASH_MODE" = "inspect" ] && ! tash__scope_is_descendant_of "$TASH_SCOPE" "$TASH_INSPECTING_TEST"; then
@@ -567,7 +587,10 @@ assert() {
 
 	case " $TASH_TESTS " in
 	*" $TASH_SCOPE "*) ;;
-	*) TASH_TESTS="$TASH_TESTS $TASH_SCOPE" ;;
+	*)
+		TASH_TESTS="$TASH_TESTS $TASH_SCOPE"
+		TASH_TOTAL_TEST_COUNT=$((TASH_TOTAL_TEST_COUNT + 1))
+		;;
 	esac
 
 	if [ "$TASH_MODE" = "inspect" ] && ! tash__scope_is_descendant_of "$TASH_SCOPE" "$TASH_INSPECTING_TEST"; then
@@ -704,10 +727,12 @@ tash_print() {
 #
 # # --snip--
 # ```
+TASH_OUTPUT_STREAM=""
 tash_init() {
 	for arg in "$@"; do
 		case "$arg" in
 		--preview) TASH_MODE="preview" ;;
+		--tap) TASH_MODE="tap" ;;
 		--inspect)
 			if [ "$#" -ne 2 ]; then
 				tash__error "tash_init: you must specify exactly one test that you want to inspect"
@@ -733,11 +758,13 @@ tash_init() {
 			printf "\t$0 --inspect <test>\n"
 			printf "\t$0 -V | --version\n"
 			printf "\t$0 -h | --help\n"
+			printf "\t$0 --tap\n"
 			printf "${TASH_BOLD_WHITE}Options:${TASH_COLOR_RESET}\n"
 			printf "\t-h --help\tShow this screen.\n"
 			printf "\t-V --version\tShow version.\n"
 			printf "\t--preview\tPreview tests in a tree instead of running them.\n"
 			printf "\t--inspect\tInspect a test by only running that test.\n"
+			printf "\t--tap\t\tEmit TAP (Test Anything Protocol). Useful for CI.\n"
 			tash__hint "GitHub repository at https://github.com/emielster/tash"
 			tash__hint "documentation at https://tash.dev"
 			exit 0 # If you're intrested: https://docopt.org
@@ -785,7 +812,7 @@ tash_end() {
 
 	TASH_END=$(date +%s)
 	TASH__elapsed=$((TASH_END - TASH_START))
-	tash__results "${TASH_COUNT_SUCCEEDED} succeeded, ${TASH_COUNT_FAILED} failed, ${TASH_COUNT_IGNORED} ignored (took ${TASH__elapsed}s)"
+	[ "$TASH_MODE" != "tap" ] && tash__results "${TASH_BOLD_GREEN}${TASH_COUNT_SUCCEEDED} succeeded${TASH_COLOR_RESET}, ${TASH_BOLD_RED}${TASH_COUNT_FAILED} failed${TASH_COLOR_RESET}, ${TASH_LIGHT}${TASH_COUNT_IGNORED} ignored${TASH_COLOR_RESET} (took ${TASH__elapsed}s)"
 
 	if [ "$TASH_MODE" = "inspect" ]; then
 		for TASH__path in $TASH_ITEM_PATHS; do
@@ -814,6 +841,10 @@ tash_end() {
 				printf "\n"
 			fi
 		done
+	fi
+
+	if [ "$TASH_MODE" = "tap" ]; then
+		printf "%s\n" "$(tash_fmt "$TASH_OUTPUT_STREAM")"
 	fi
 
 	if [ "$TASH_COUNT_FAILED" -gt 0 ]; then
