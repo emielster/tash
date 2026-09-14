@@ -863,7 +863,7 @@ item "external"
             assert stderr contains "terminated"
             assert stderr contains "E017"
 			assert stderr contains "scope must be exactly \"tests\""
-            check 17 "did you forget to end one of your items?"
+            check 17 "did you forget to emit one of your items?"
 		emit
 
 		item "test_failed"

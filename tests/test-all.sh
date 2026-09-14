@@ -4,7 +4,7 @@
 # e.g. zsh, ksh, dash, bash...
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-SHELLS="dash bash ksh zsh"
+SHELLS="dash bash ksh zsh mksh yash"
 FAILED=0
 
 GREEN="\033[1;32m"
@@ -12,6 +12,20 @@ YELLOW="\033[1;33m"
 RED="\033[1;31m"
 WHITE="\033[1;37m"
 RESET="\033[0m"
+
+run_under() {
+	if ! command -v "$1" >/dev/null 2>&1; then
+		skip "skipping '${1}' because it is not found on this system."
+		return
+	fi
+	doing "running under $*"
+	if "$@" "$SCRIPT_DIR/tash-tests.sh"; then
+		ok "$* passed"
+	else
+		fail "$* failed! ($?)"
+		FAILED=1
+	fi
+}
 
 skip() {
 	printf "${WHITE}[${YELLOW}SHELL SKIP${WHITE}]${RESET} %s\n" "$*"
@@ -30,18 +44,9 @@ fail() {
 }
 
 for shell in $SHELLS; do
-	if ! command -v "$shell" >/dev/null 2>&1; then
-		skip "skipping '${shell}' because it is not found on this system."
-	fi
-	doing "running under ${shell}"
-	if "$shell" "$SCRIPT_DIR/tash-tests.sh"; then
-		ok "${shell} passed"
-	else
-		fail "${shell} failed! ($?)"
-		FAILED=1
-	fi
-
+	run_under "$shell"
 done
+run_under busybox ash
 
 if [ "$FAILED" -eq 0 ]; then
 	ok "all shells passed!"

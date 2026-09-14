@@ -27,6 +27,14 @@ That is pretty much it. It allows you to write tests, in a portable manner. It i
 <!-- If you want portable tests, zero dependencies, a tiny footprint, a fast startup, and a nice UX, Tash is probably for you. -->
 <!-- However, if you need more advanced features or are working with a large codebase, Tash may not be the right choice. -->
 
+## Shells supported
+- Dash
+- Bash
+- Zsh
+- Ksh
+- Busybox ash
+- Yash
+
 ## Advantages of Tash
 - Anyone with your repo cloned can run tests immediately
 - Has a nice UX
@@ -78,3 +86,14 @@ And you're done!
 - [ ] Add ergonomic features/commands
 - [ ] Add Bash/Zsh extensions to a separate script, that overwrites the POSIX core
 
+
+## Features coming to Tash before v1.0.0 Release
+- `stdin "something"`, which is the equivalent of `item "stdin"; value "something"; emit` (just like run populates `stdout`, `stderr` and `exitcode`), that run reads and then feeds into the command.
+- `testify`, that basically makes an item a test, like assert does, but having a separate command allows for more plumbing, like in [tash-tests.sh](tests/tash-tests.sh) where I have a lot of `item "make_me_a_test"; value 0; emit; assert make_me_a_test -eq 0`.
+- Probably more assert operators, like `matches` to support regex (e.g. `assert stdout matches '[0-9]'`), and probably something that inverts it, like a refute or reject: (`refute stdout matches '[0-9]'`).
+- Support to match tests that is just the first argument of normal mode, like: `./tash-tests.sh tests::external`. 
+
+
+
+
+- Have any ideas? Please let me know!

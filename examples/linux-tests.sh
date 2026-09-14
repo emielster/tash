@@ -75,7 +75,7 @@ item "mkdir"
 emit
 
 item "test_directory"
-	run test -d tash_test_directory
+	stdin "hello"; run test -d tash_test_directory
 	assert -z stdout
 	assert -z stderr
 	assert exitcode -eq 0
