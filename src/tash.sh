@@ -303,8 +303,8 @@ tash__terminate() {
 }
 TASH_E_ITEM_ARGUMENT_COUNT=1 # e.g. https://tash.dev/error/E001
 TASH_E_ITEM_INVALID_NAME=2
-TASH_E_METI_ARGUMENT_COUNT=3
-TASH_E_METI_INVALID_SCOPE=4
+TASH_E_EMIT_ARGUMENT_COUNT=3
+TASH_E_EMIT_INVALID_SCOPE=4
 TASH_E_VALUE_ARGUMENT_COUNT=5
 TASH_E_RUN_ARGUMENT_COUNT=6
 TASH_E_FAIL_ARGUMENT_COUNT=7
@@ -333,7 +333,7 @@ TASH_MODE="run"
 #
 # item my_item # Create item "my_item" inside of the scope "tests"
 #
-# meti
+# emit
 #
 # # --snip--
 # ```
@@ -369,21 +369,21 @@ item() {
 #
 # # Scope is "tests::my_test"
 #
-# meti # End my_test's scope.
+# emit # End my_test's scope.
 #
 # # Scope is "tests"
 #
 # # --snip--
 # ```
-meti() {
+emit() {
 	if [ $# -ne 0 ]; then
-		tash__error "meti: expected zero arguments"
-		tash__terminate "$TASH_E_METI_ARGUMENT_COUNT"
+		tash__error "emit: expected zero arguments"
+		tash__terminate "$TASH_E_EMIT_ARGUMENT_COUNT"
 	fi
 
 	if [ "$TASH_SCOPE" = "tests" ]; then
-		tash__error "meti: cannot exit out of the global scope"
-		tash__terminate "$TASH_E_METI_INVALID_SCOPE"
+		tash__error "emit: cannot exit out of the global scope"
+		tash__terminate "$TASH_E_EMIT_INVALID_SCOPE"
 	fi
 
 	case " $TASH_TESTS " in
@@ -420,7 +420,7 @@ meti() {
 # # --snip--
 # item my_value
 #     value 5 # tests::my_value is now set to 5
-# meti
+# emit
 # # --snip--
 # ```
 value() {
@@ -441,7 +441,7 @@ value() {
 #
 # item my_test
 #    run ./myscript.sh arg1 arg2 # my_test::stdout, my_test::stderr and my_test::exitcode are all set after this command
-# meti
+# emit
 #
 # ```
 TASH_TMP_STDOUT=""
@@ -454,11 +454,11 @@ run() {
 
 	if [ "$TASH_MODE" = "preview" ]; then
 		item "exitcode"
-		meti
+		emit
 		item "stdout"
-		meti
+		emit
 		item "stderr"
-		meti
+		emit
 		return # We don't want to run any command in preview mode.
 	fi
 
@@ -472,13 +472,13 @@ run() {
 	TASH__code=$?
 	item "exitcode"
 	value "$TASH__code"
-	meti
+	emit
 	item "stdout"
 	value "$(cat "$TASH_TMP_STDOUT")"
-	meti
+	emit
 	item "stderr"
 	value "$(cat "$TASH_TMP_STDERR")"
-	meti
+	emit
 
 }
 
@@ -549,7 +549,7 @@ fail() {
 #	 assert stdout = "hello" # my_test is now a test
 #	 assert exitcode -eq 0
 #	 asset stdout contains "lo"
-# meti
+# emit
 #
 # # --snip--
 # ```
@@ -775,7 +775,7 @@ tash_end() {
 	fi
 	if ! [ "$TASH_SCOPE" = "tests" ]; then
 		tash__error "tash_end: scope must be exactly \"tests\""
-		tash__hint "tash_end: did you forget to end one of your items?"
+		tash__hint "tash_end: did you forget to emit one of your items?"
 		tash__terminate "$TASH_E_TASH_END_INVALID_SCOPE"
 	fi
 	if [ "$TASH_MODE" = "preview" ]; then

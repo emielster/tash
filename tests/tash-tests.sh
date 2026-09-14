@@ -26,14 +26,14 @@ item "internal"
 			assert stdout -z
 			assert stderr -z
 			check 0
-		meti
+		emit
 		item "invalid_name"
 			run tash__is_valid_name "invalid-name"
 			assert stdout -z
 			assert stderr -z
 			check 1
-		meti
-	meti
+		emit
+	emit
 	item "tash__mk_temp"
 		run tash__mk_temp
 		file=$(tash_print stdout)
@@ -41,22 +41,22 @@ item "internal"
 		assert -z stderr
 		assert -n stdout
 		check 0
-	meti
+	emit
 	item "tash__scope_is_descendant_of"
 		item "is_descendant"
 			run tash__scope_is_descendant_of "$TASH_SCOPE" "tests::internal::tash__scope_is_descendant_of"
 			assert stdout -z
 			assert stderr -z
 			check 0
-		meti
+		emit
 
 		item "is_not_descendant"
 			run tash__scope_is_descendant_of "$TASH_SCOPE" "tests::internal::tash__mk_temp"
 			assert stdout -z
 			assert stderr -z
 			check 1
-		meti
-	meti
+		emit
+	emit
 	item "tash__should_log"
 		item "should_log"
 			run tash__should_log
@@ -67,102 +67,102 @@ item "internal"
 #								  # return 0, and without inspecting this should
 #								  # also return 0. if inspecting something else,
 #								  # this is never ran and thus this will be ok.
-		meti
-	meti
+		emit
+	emit
 	item "tash__failure_message"
 		item "zero"
 			run tash__failure_message "stdout" "-z" "not_important_here" "something_else"
 			check 0 "expected stdout to be empty, but it was \"something_else\""
 			assert stderr -z
-		meti
+		emit
 		item "non_zero"
 			run tash__failure_message "stdout" "-n"
 			check 0 "expected stdout to be non-empty, but it was empty"
 			assert stderr -z
-		meti
+		emit
 		item "string_equality"
 			run tash__failure_message "stdout" "=" "expected" "actual"
 			check 0 "expected stdout = \"expected\", but stdout is \"actual\""
 			assert stderr -z
-		meti
+		emit
 		item "string_inequality"
 			run tash__failure_message "stdout" "!=" "expected" "expected"
 			check 0 "expected stdout != \"expected\", but stdout is \"expected\""
 			assert stderr -z
-		meti
+		emit
 		item "contains"
 			run tash__failure_message "stdout" "contains" "hello" "bye"
 			check 0 "expected stdout contains \"hello\", but stdout is \"bye\""
 			assert stderr -z
-		meti
+		emit
 		item "eq"
 			run tash__failure_message "exitcode" "-eq" "1" "0"
 			check 0 "expected exitcode == 1, but exitcode is 0"
 			assert stderr -z
-		meti
+		emit
 		item "ne"
 			run tash__failure_message "exitcode" "-ne" "1" "1"
 			check 0 "expected exitcode != 1, but exitcode is 1"
 			assert stderr -z
-		meti
+		emit
 		item "gt"
 			run tash__failure_message "exitcode" "-gt" "1" "0"
 			check 0 "expected exitcode > 1, but exitcode is 0"
 			assert stderr -z
-		meti
+		emit
 		item "lt"
 			run tash__failure_message "exitcode" "-lt" "1" "2"
 			check 0 "expected exitcode < 1, but exitcode is 2"
 			assert stderr -z
-		meti
+		emit
 		item "ge"
 			run tash__failure_message "exitcode" "-ge" "1" "0"
 			check 0 "expected exitcode >= 1, but exitcode is 0"
 			assert stderr -z
-		meti
+		emit
 		item "le"
 			run tash__failure_message "exitcode" "-le" "1" "2"
 			check 0 "expected exitcode <= 1, but exitcode is 2"
 			assert stderr -z
-		meti
+		emit
 		item "default"
 			run tash__failure_message "exitcode" "unknown" "1" "2"
 		check 0 "expected exitcode unknown 1, but exitcode is 2"
 			assert stderr -z
-		meti
-	meti
+		emit
+	emit
 	item "tash__op_to_words"
 		item "eq"
 			run tash__op_to_words "-eq"
 			assert -z stderr
 			check 0 "=="
-		meti
+		emit
 		item "ne"
 			run tash__op_to_words "-ne"
 			assert -z stderr
 			check 0 "!="
-		meti
+		emit
 		item "gt"
 			run tash__op_to_words "-gt"
 			assert -z stderr
 			check 0 ">"
-		meti
+		emit
 		item "lt"
 			run tash__op_to_words "-lt"
 			assert -z stderr
 			check 0 "<"
-		meti
+		emit
 		item "ge"
 			run tash__op_to_words "-ge"
 			assert -z stderr
 			check 0 ">="
-		meti
+		emit
 		item "le"
 			run tash__op_to_words "-le"
 			assert -z stderr
 			check 0  "<="
-		meti
-	meti
+		emit
+	emit
 	item "tash__preview_is_last"
 		item "is_not_last"
 			TEMP_TASH_ITEM_PATHS=$TASH_ITEM_PATHS # make --preview still work, otherwise it would overwrite it
@@ -172,7 +172,7 @@ item "internal"
 			assert -z stderr
 			check 1
 			TASH_ITEM_PATHS=$TEMP_TASH_ITEM_PATHS
-		meti
+		emit
 		item "is_last"
 			TEMP_TASH_ITEM_PATHS=$TASH_ITEM_PATHS
 			TASH_ITEM_PATHS="tests::internal::tash__preview_is_last::is_not_last tests::internal::tash__preview_is_last::is_last"
@@ -181,8 +181,8 @@ item "internal"
 			assert -z stderr
 			check 0
 			TASH_ITEM_PATHS=$TEMP_TASH_ITEM_PATHS
-		meti
-	meti
+		emit
+	emit
 	item "tash__preview_tree"
 		run tash__preview_tree
 		# do a few checks, otherwise the check would be fragile
@@ -193,7 +193,7 @@ item "internal"
 		assert stdout contains "-"
 		assert -z stderr
 		check 0
-	meti
+	emit
 	item "tash__window"
 		run tash__window "test" "line"
 		assert stdout contains "test"
@@ -203,7 +203,7 @@ item "internal"
 		assert stdout contains "|"
 		assert -z stderr
 		check 0
-	meti
+	emit
 	item "tash__var_name"
 		# We have no reliable way of checking here, because
 		# run itself uses tash__var_name before we can check. This is one of
@@ -216,9 +216,9 @@ item "internal"
 		# so we use a quick workaround
 		item make_me_a_test
 			value 0
-		meti
+		emit
 		assert make_me_a_test -eq 0
-	meti
+	emit
 
 	item "tash__set"
 		tash__set "tests::misc::something" "5"
@@ -227,9 +227,9 @@ item "internal"
 		fi
 		item make_me_a_test
 			value 0
-		meti
+		emit
 		assert make_me_a_test -eq 0
-	meti
+	emit
 
 	item "tash__get"
 		# We'll test from the value set with tash__set
@@ -239,9 +239,9 @@ item "internal"
 		fi
 		item make_me_a_test
 			value 0
-		meti
+		emit
 		assert make_me_a_test -eq 0
-	meti
+	emit
 
 	item "tash__log"
 		item "test_stdout"
@@ -250,15 +250,15 @@ item "internal"
 			assert stdout contains "test"
 			assert -z stderr
 			check 0
-		meti
+		emit
 		item "test_stderr"
 			run tash__log "test" "$TASH_BOLD_GREEN" "tash is cool!" 1
 			assert -z stdout
 			assert stderr contains "tash is cool!"
 			assert stderr contains "test"
 			check 0
-		meti
-	meti
+		emit
+	emit
 
 	item "tash__success"
 		run tash__success "this is a test!"
@@ -266,7 +266,7 @@ item "internal"
 		assert stdout contains "ok"
 		assert -z stderr
 		check 0
-	meti
+	emit
 
 
 	item "tash__error"
@@ -275,7 +275,7 @@ item "internal"
 		assert stderr contains "err"
 		assert -z stdout
 		check 0
-	meti
+	emit
 
 	item "tash__results"
 		run tash__results "this is a test!"
@@ -283,7 +283,7 @@ item "internal"
 		assert stdout contains "results"
 		assert -z stderr
 		check 0
-	meti
+	emit
 
 	item "tash__hint"
 		run tash__hint "this is a test!"
@@ -291,7 +291,7 @@ item "internal"
 		assert stdout contains "hint"
 		assert -z stderr
 		check 0
-	meti
+	emit
 
 	item "tash__failure"
 		run tash__failure "this is a test!"
@@ -299,7 +299,7 @@ item "internal"
 		assert stderr contains "failure"
 		assert -z stdout
 		check 0
-	meti
+	emit
 
 	item "tash__terminate"
 		# Need to run it in a real subshell like this,
@@ -311,8 +311,8 @@ item "internal"
 		# Finally, we can assert the exitcode with something
 		# else than 0.
 		check 9
-	meti
-meti
+	emit
+emit
 
 if [ $TASH_COUNT_FAILED -eq 0 ]; then
     printf "${TASH_BOLD_WHITE}[🎉]${TASH_COLOR_RESET} tash ${TASH_BOLD_GREEN}FINISHED${TASH_COLOR_RESET} internal tests without ${TASH_BOLD_WHITE}any errors!${TASH_COLOR_RESET}\n"
@@ -329,14 +329,14 @@ item "external"
             assert stderr contains "E001"
             assert stderr contains "expected exactly one argument"
             check 1 ""
-        meti
+        emit
         item "invalid_name"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; item "invalid-name::"'
             assert stderr contains "terminated"
             assert stderr contains "E002"
             assert stderr contains "name must match"
             check 2 "don't use spaces, colons or slashes"
-        meti
+        emit
         item "test"
             case " $TASH_ITEM_PATHS " in
             *" $TASH_SCOPE "*) ;;
@@ -344,32 +344,32 @@ item "external"
             esac
             item make_me_a_test
                 value 0
-            meti
+            emit
             assert make_me_a_test -eq 0
-        meti
+        emit
 
         item "make_me_a_test"
             value 0
-        meti
+        emit
         assert make_me_a_test -eq 0
-    meti
-    item "meti"
+    emit
+    item "emit"
         item "argument_count"
-		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; meti test'
+		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; emit test'
             assert stderr contains "terminated"
             assert stderr contains "E003"
             assert stderr contains "expected zero arguments"
             check 3 ""
-        meti
+        emit
         item "invalid_scope"
-            run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; meti'
+            run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; emit'
             assert stderr contains "terminated"
             assert stderr contains "E004"
             assert stderr contains "cannot exit out of the global scope"
             check 4 ""
-        meti
+        emit
         # Same here again, we can't really test
-        # meti, so we catch it in a subshell
+        # emit, so we catch it in a subshell
         temp=$(tash__mk_temp) # Safe to use here, because it is already testsed
         TEMP_TASH_SCOPE=$TASH_SCOPE
         ERR=""
@@ -378,11 +378,11 @@ item "external"
             item "log_success"
                 item "make_me_a_test"
                      value 0
-                meti
+                emit
                 assert make_me_a_test -eq 0
-            meti
+            emit
             if [ $((TEMP_TASH_COUNT_SUCCEEDED + 1)) -ne $TASH_COUNT_SUCCEEDED ]; then
-                ERR="expected meti to increase TASH_COUNT_SUCCEEDED by one"
+                ERR="expected emit to increase TASH_COUNT_SUCCEEDED by one"
             else
                 TASH_COUNT_SUCCEEDED=$((TASH_COUNT_SUCCEEDED-1))
             fi
@@ -393,11 +393,11 @@ item "external"
         rm -f "$temp"
         case "$contents" in
         *"log_success succeeded"*) ;;
-        *) fail "expected meti to print a success message, but got: $contents" ;;
+        *) fail "expected emit to print a success message, but got: $contents" ;;
         esac
 
         if [ "$TEMP_TASH_SCOPE" != "$TASH_SCOPE" ]; then
-            fail "expected meti to meti $TASH_SCOPE 'log_success' scope"
+            fail "expected emit to emit $TASH_SCOPE 'log_success' scope"
         fi
 
         if [ -n "$ERR" ]; then
@@ -411,18 +411,18 @@ item "external"
             item "log_failure"
                 item "make_me_a_test"
                     value 0
-                meti
+                emit
                 assert make_me_a_test -eq 1
-            meti
+            emit
             if [ $((TEMP_TASH_COUNT_FAILED + 1)) -ne $TASH_COUNT_FAILED  ]; then
-                ERR="expected meti to increase TASH_COUNT_FAILED by one"
+                ERR="expected emit to increase TASH_COUNT_FAILED by one"
             else
                 TASH_COUNT_FAILED=$((TASH_COUNT_FAILED-1))
             fi
 
             case "$TASH_FAILED_TESTS" in
             *"${TASH_SCOPE}::log_failure"*) ;;
-            *) ERR="expected meti to add log_failure to TASH_FAILED_TESTS, but TASH_FAILED_TESTS is $TASH_FAILED_TESTS" ;;
+            *) ERR="expected emit to add log_failure to TASH_FAILED_TESTS, but TASH_FAILED_TESTS is $TASH_FAILED_TESTS" ;;
             esac
 
 
@@ -432,7 +432,7 @@ item "external"
         rm -f "$temp"
         case "$contents" in
         *"expected make_me_a_test == 1, but make_me_a_test is 0"*) ;;
-        *) fail "expected meti to print a failure message, but got: $contents" ;;
+        *) fail "expected emit to print a failure message, but got: $contents" ;;
         esac
 
         if [ -n "$ERR" ]; then
@@ -440,7 +440,7 @@ item "external"
         fi
 
         if [ "$TEMP_TASH_SCOPE" != "$TASH_SCOPE" ]; then
-            fail "expected meti to meti $TASH_SCOPE 'log_failure' scope"
+            fail "expected emit to emit $TASH_SCOPE 'log_failure' scope"
         fi
 
         temp=$(tash__mk_temp)
@@ -453,12 +453,12 @@ item "external"
             item "should_not_log_inspect"
                 item "make_me_a_test"
                     value 0
-                meti
+                emit
                 assert make_me_a_test -eq 0
-            meti
+            emit
 
             if [ $((TEMP_TASH_COUNT_IGNORED + 1)) -ne $TASH_COUNT_IGNORED ]; then
-                ERR="expected meti to increase TASH_COUNT_IGNORED by one"
+                ERR="expected emit to increase TASH_COUNT_IGNORED by one"
             else
                 TASH_COUNT_IGNORED=$((TASH_COUNT_IGNORED-1))
             fi
@@ -475,14 +475,14 @@ item "external"
         fi
 
         if [ "$TEMP_TASH_SCOPE" != "$TASH_SCOPE" ]; then
-            fail "expected meti to meti $TASH_SCOPE 'should_not_log_inspect' scope"
+            fail "expected emit to emit $TASH_SCOPE 'should_not_log_inspect' scope"
         fi
 
 		item "make_me_a_test"
 			value 0
-		meti
+		emit
 		assert make_me_a_test -eq 0
-    meti
+    emit
     item "value"
         item "argument_count"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; value'
@@ -490,10 +490,10 @@ item "external"
             assert stderr contains "E005"
             assert stderr contains "expected exactly one argument"
             check 5 ""
-        meti
+        emit
         item "test"
             value 0
-        meti
+        emit
         case "$TASH_ITEM_PATHS" in
         *"$TASH_SCOPE::test"*) ;;
         *) fail "expected value to add $TASH_SCOPE::test to TASH_ITEM_PATHS, but TASH_ITEM_PATHS is $TASH_ITEM_PATHS" ;;
@@ -505,7 +505,7 @@ item "external"
         fi
 
         assert test -eq 0
-    meti
+    emit
     item "run"
         item "argument_count"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; run'
@@ -513,7 +513,7 @@ item "external"
             assert stderr contains "E006"
             assert stderr contains "expected atleast one argument (command...)"
             check 6 ""
-        meti
+        emit
         # We cannot do run run echo "something" here, because run itself
         # sets exitcode and co, so it just overwrites it
         item "preview"
@@ -528,9 +528,9 @@ item "external"
             fi
             item "make_me_a_test"
                 value 0
-            meti
+            emit
             assert make_me_a_test -eq 0
-		meti
+		emit
         item "inspect_runs"
             TEMP_TASH_MODE=$TASH_MODE
             TEMP_TASH_INSPECTING_TEST=$TASH_INSPECTING_TEST
@@ -540,7 +540,7 @@ item "external"
             TASH_MODE=$TEMP_TASH_MODE
             TASH_INSPECTING_TEST=$TEMP_TASH_INSPECTING_TEST
             check 0 "something"
-        meti
+        emit
         item "inspect_skips"
             TEMP_TASH_MODE=$TASH_MODE
             TEMP_TASH_INSPECTING_TEST=$TASH_INSPECTING_TEST
@@ -557,10 +557,10 @@ item "external"
             fi
             item "make_me_a_test"
                 value 0
-            meti
+            emit
             assert make_me_a_test -eq 0
-        meti
-    meti
+        emit
+    emit
 
 	item "fail"
         item "argument_count"
@@ -569,37 +569,37 @@ item "external"
             assert stderr contains "E007"
 			assert stderr contains "expected atleast one argument (reason)"
             check 7 ""
-        meti
+        emit
         item "invalid_scope"
             run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; fail "test"'
             assert stderr contains "terminated"
             assert stderr contains "E008"
             assert stderr contains "cannot fail globally"
             check 8 "create an item and fail in there"
-        meti
+        emit
 		temp=$(tash__mk_temp)
 
 		{
             TEMP_TASH_COUNT_FAILED=$TASH_COUNT_FAILED
 			item "should_fail"
 				fail "hello from temp!"
-			meti
+			emit
 			TASH_COUNT_FAILED=$TEMP_TASH_COUNT_FAILED # We could go and assert here that it hasn't increased by one, but the
-													  # meti tests already test that.
+													  # emit tests already test that.
 		} 2> "$temp"
 
 		contents=$(cat "$temp")
 		rm -f "$temp"
 		case "$contents" in
 		*"hello from temp!"*) ;;
-		*) fail "expected meti to print a failure message, but got: $contents" ;;
+		*) fail "expected emit to print a failure message, but got: $contents" ;;
 		esac
 		item "make_me_a_test"
 			value 0
-		meti
+		emit
 
 		assert make_me_a_test -eq 0
-	meti
+	emit
 
 	item "assert"
         item "argument_count"
@@ -608,21 +608,21 @@ item "external"
             assert stderr contains "E009"
 			assert stderr contains "expected atleast two arguments (item, operator, [expected])"
             check 9 ""
-        meti
+        emit
         item "invalid_scope"
             run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; assert non_existing_but_does_not_matter -eq 0'
             assert stderr contains "terminated"
             assert stderr contains "E010"
             assert stderr contains "cannot assert globally"
             check 10 "create an item and assert in there"
-        meti
+        emit
 		item "unknown_operator"
-            run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; item "test"; assert non_existing_but_does_not_matter -unknown 0; meti'
+            run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; item "test"; assert non_existing_but_does_not_matter -unknown 0; emit'
 			assert stderr contains "terminated"
 			assert stderr contains "E011"
 			assert stderr contains "assert: unknown operator '-unknown'"
 			check 11 ""
-		meti
+		emit
 		tash__assert_test_ok() {
 			label=$1
 			op=$2
@@ -634,108 +634,108 @@ item "external"
 				item "should_be_ok"
 					item my_value
 						value "$val"
-					meti
+					emit
 					assert my_value "$op" "$expected"
-				meti
+				emit
 			} >"$temp"
 			TASH_COUNT_SUCCEEDED=$TEMP_TASH_COUNT_SUCCEEDED
 			contents=$(cat "$temp")
 			rm -f "$temp"
 			case "$contents" in
 			*"${label}::should_be_ok succeeded!"*) ;;
-			*) fail "expected meti to print a success message, but got: $contents" ;;
+			*) fail "expected emit to print a success message, but got: $contents" ;;
 			esac
 		}
 		item "eq"
 			tash__assert_test_ok "eq" "-eq" "0" "0"
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "ne"
 			tash__assert_test_ok "ne" "-ne" "0" "1"
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "gt"
 			tash__assert_test_ok "gt" "-gt" "0" "-1"
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "lt"
 			tash__assert_test_ok "lt" "-lt" "0" "1"
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "ge"
 			tash__assert_test_ok "ge" "-ge" "0" "0"
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "le"
 			tash__assert_test_ok "le" "-le" "0" "0"
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "zero"
 			tash__assert_test_ok "zero" "-z" "" ""
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "non_zero"
 			tash__assert_test_ok "non_zero" "-n" "hello" ""
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "contains"
 			tash__assert_test_ok "contains" "contains" "hello world" "hello"
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "string_equality"
 			tash__assert_test_ok "string_equality" "=" "hello" "hello"
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "string_inequality"
 			tash__assert_test_ok "string_inequality" "!=" "hello" "bye"
 
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 
 			assert make_me_a_test -eq 0
-		meti
-	meti
+		emit
+	emit
 	item "check"
         item "argument_count"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; check'
@@ -743,12 +743,12 @@ item "external"
             assert stderr contains "E012"
 			assert stderr contains "expected one to three arguments (exitcode, [stdout], [stderr])"
             check 12 ""
-        meti
+        emit
 		# You could go and test it too, but under the hood,
 		# it is just assert 3x times in one function.
 		# Not really worth it IMHO, since assert is already
 		# tested.
-	meti
+	emit
 	item "tash_fmt"
 		item "argument_count"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_fmt'
@@ -756,12 +756,12 @@ item "external"
             assert stderr contains "E013"
 			assert stderr contains "expected exactly one argument (string)"
             check 13 ""
-		meti
+		emit
 		
 		run printf "item1\nitem2"
 		check 0 "$(tash_fmt "item1\nitem2")"
 	
-	meti
+	emit
 	item "tash_print"
 		item "argument_count"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_print'
@@ -769,11 +769,11 @@ item "external"
             assert stderr contains "E014"
 			assert stderr contains "expected exactly one argument (item)"
             check 14 ""
-		meti
+		emit
 
 		item "test"	
 			value "hello!"
-		meti
+		emit
 
 		raw_value_test=$(tash_print "test")
 		if [ "$raw_value_test" != "hello!" ]; then
@@ -782,10 +782,10 @@ item "external"
 
 		item "make_me_a_test"
 			value 0
-		meti
+		emit
 
 		assert make_me_a_test -eq 0
-	meti
+	emit
 
 	item "tash_init"
 		item "argument_count_inspect"	
@@ -794,14 +794,14 @@ item "external"
             assert stderr contains "E016"
 			assert stderr contains "you must specify exactly one test that you want to inspect"
             check 16 "run sh -h | --help for help"
-		meti
+		emit
 		item "unknown_argument"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_init unknown'
             assert stderr contains "terminated"
             assert stderr contains "E015"
 			assert stderr contains "unknown argument 'unknown'"
             check 15 "run sh -h | --help for help"
-		meti
+		emit
 		item "preview"
 			TEMP_TASH_MODE=$TASH_MODE
 			tash_init --preview
@@ -811,9 +811,9 @@ item "external"
 			TASH_MODE=$TEMP_TASH_MODE
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "inspect"
 			TEMP_TASH_MODE=$TASH_MODE
 			TEMP_TASH_INSPECTING_TEST=$TASH_INSPECTING_TEST
@@ -830,14 +830,14 @@ item "external"
 			TASH_INSPECTING_TEST=$TEMP_TASH_INSPECTING_TEST
 			item "make_me_a_test"
 				value 0
-			meti
+			emit
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "version"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_init -V'
 			assert stdout contains "run sh -h | --help for help"
 			check 0 "v" 
-		meti
+		emit
 		item "help"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_init -h'
 			assert stdout contains "https://github.com/emielster/tash"
@@ -847,8 +847,8 @@ item "external"
 			assert stdout contains "Options:"
 			# ...
 			check 0 
-		meti
-	meti
+		emit
+	emit
 	item "tash_end"
 		item "argument_count"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_end hello'
@@ -856,7 +856,7 @@ item "external"
             assert stderr contains "E018"
 			assert stderr contains "expected zero arguments"
             check 18 ""
-		meti
+		emit
 
 		item "invalid_scope"	
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; item "scope"; tash_end'
@@ -864,7 +864,7 @@ item "external"
             assert stderr contains "E017"
 			assert stderr contains "scope must be exactly \"tests\""
             check 17 "did you forget to end one of your items?"
-		meti
+		emit
 
 		item "test_failed"
 			temp=$(tash__mk_temp)
@@ -886,9 +886,9 @@ item "external"
 			
 			item "make_me_a_test"
 				value 0
-			meti	
+			emit	
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "test_succeeded"
 			temp=$(tash__mk_temp)
 			TEMP_TASH_COUNT_SUCCEEDED=$TASH_COUNT_SUCCEEDED
@@ -909,9 +909,9 @@ item "external"
 			
 			item "make_me_a_test"
 				value 0
-			meti	
+			emit	
 			assert make_me_a_test -eq 0
-		meti
+		emit
 		item "test_ignored"
 			temp=$(tash__mk_temp)
 			TEMP_TASH_COUNT_IGNORED=$TASH_COUNT_IGNORED
@@ -932,11 +932,11 @@ item "external"
 			
 			item "make_me_a_test"
 				value 0
-			meti	
+			emit	
 			assert make_me_a_test -eq 0
-		meti
-	meti
-meti
+		emit
+	emit
+emit
 
 if [ $TASH_COUNT_FAILED -eq 0 ]; then
     printf "${TASH_BOLD_WHITE}[🎉]${TASH_COLOR_RESET} tash ${TASH_BOLD_GREEN}FINISHED${TASH_COLOR_RESET} external tests without ${TASH_BOLD_WHITE}any errors!${TASH_COLOR_RESET}\n"
