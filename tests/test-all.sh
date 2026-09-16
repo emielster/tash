@@ -13,13 +13,15 @@ RED="\033[1;31m"
 WHITE="\033[1;37m"
 RESET="\033[0m"
 
+ARGS="$@"
+
 run_under() {
 	if ! command -v "$1" >/dev/null 2>&1; then
 		skip "skipping '${1}' because it is not found on this system."
 		return
 	fi
 	doing "running under $*"
-	if "$@" "$SCRIPT_DIR/tash-tests.sh"; then
+	if "$@" "$SCRIPT_DIR/tash-tests.sh" "$ARGS"; then
 		ok "$* passed"
 	else
 		fail "$* failed! ($?)"

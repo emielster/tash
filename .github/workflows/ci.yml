@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [bash, dash, ksh, mksh, zsh, busybox]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install shells
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dash ksh mksh zsh busybox
+
+      - name: Run Tash (${{ matrix.shell }})
+        run: |
+          if [ "${{ matrix.shell }}" = "busybox" ]; then
+            prove --exec 'busybox ash' -v tests/tash-tests.sh :: --tap
+          else
+            prove --exec "${{ matrix.shell }}" -v tests/tash-tests.sh :: --tap
+          fi
