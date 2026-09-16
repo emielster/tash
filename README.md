@@ -44,13 +44,11 @@ That is pretty much it. It allows you to write tests, in a portable manner. It i
 - You get to write tests
 
 ## Disadvantages of Tash
-- Less mature
 - POSIX limitations (e.g. timing is limited to whole seconds)
-- Limited feature set
 - You get to write tests
 
 ## Installation
-Tash cannot really be *"installed"* as a traditional package. It is a script, that you include in your project.
+Tash is a script, that you include in your project.
 There are two ways to do this:
 
 ### Via `wget`
@@ -83,7 +81,7 @@ And you're done!
 
 ## TODO
 
-- [ ] TAP/Junit compatibility for CI
+- [x] TAP/(Junit) compatibility for CI
 - [ ] Make documentation
 - [ ] Add ergonomic features/commands
 - [ ] Add Bash/Zsh extensions to a separate script, that overwrites the POSIX core
@@ -94,8 +92,5 @@ And you're done!
 - `testify`, that basically makes an item a test, like assert does, but having a separate command allows for more plumbing, like in [tash-tests.sh](tests/tash-tests.sh) where I have a lot of `item "make_me_a_test"; value 0; emit; assert make_me_a_test -eq 0`.
 - Probably more assert operators, like `matches` to support regex (e.g. `assert stdout matches '[0-9]'`), and probably something that inverts it, like a refute or reject: (`refute stdout matches '[0-9]'`).
 - Support to match tests that is just the first argument of normal mode, like: `./tash-tests.sh tests::external`. 
-
-
-
 
 - Have any ideas? Please let me know!
