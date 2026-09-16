@@ -34,6 +34,7 @@ That is pretty much it. It allows you to write tests, in a portable manner. It i
 - Ksh
 - Busybox ash
 - Yash
+![CI](https://github.com/emielster/tash/actions/workflows/ci.yml/badge.svg)
 
 ## Advantages of Tash
 - Anyone with your repo cloned can run tests immediately
