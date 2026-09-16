@@ -32,13 +32,10 @@ To prevent this, please follow the Tash naming convention:
 | external function | tash_* or [**none**\*](#information-about-none) | `tash_init`, `item` |
 | internal function<sub>(i.e. from `tash.sh`)</sub> | tash__* | `tash__var_name`, `tash__scope_is_descendant_of` |
 | framework variables | TASH_* (uppercase) | `TASH_SCOPE`, `TASH_MODE` |
-| function/internal variables | TASH__* | `TASH__name`, `TASH__mode` |
+| function/internal variables | TASH__* (lowercase) | `TASH__name`, `TASH__mode` |
 
 <a name="information-about-none">*: This is because Tash is meant to be used as a testing framework, isolated from real source code. Therefore we can safely assume the user doesn't have any other functions named `item` already defined. Plus, having to type `tash_` everytime when you open up a new item is repetitive and exhausting. </a>
 
 
-
-
-(coming soon)
 
 

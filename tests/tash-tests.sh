@@ -314,7 +314,7 @@ item "internal"
 	emit
 emit
 
-if tash__should_log; then
+if [ "$TASH_MODE" = "run" ]; then
 	if [ $TASH_COUNT_FAILED -eq 0 ]; then
 		printf "${TASH_BOLD_WHITE}[🎉]${TASH_COLOR_RESET} tash ${TASH_BOLD_GREEN}FINISHED${TASH_COLOR_RESET} internal tests without ${TASH_BOLD_WHITE}any errors!${TASH_COLOR_RESET}\n"
 	else
@@ -374,6 +374,8 @@ item "external"
         # emit, so we catch it in a subshell
         temp=$(tash__mk_temp) # Safe to use here, because it is already testsed
         TEMP_TASH_SCOPE=$TASH_SCOPE
+		TEMP_TASH_MODE=$TASH_MODE
+		TASH_MODE="run"
         ERR=""
         {
             TEMP_TASH_COUNT_SUCCEEDED=$TASH_COUNT_SUCCEEDED
@@ -390,7 +392,7 @@ item "external"
             fi
 
         } > "$temp"
-
+		TASH_MODE=$TEMP_TASH_MODE
         contents=$(cat "$temp")
         rm -f "$temp"
         case "$contents" in
@@ -407,6 +409,7 @@ item "external"
         fi
         temp=$(tash__mk_temp)
         TEMP_TASH_SCOPE=$TASH_SCOPE
+		TASH_MODE="run"
         ERR=""
         {
             TEMP_TASH_COUNT_FAILED=$TASH_COUNT_FAILED
@@ -429,6 +432,7 @@ item "external"
 
 
         } 2> "$temp"
+		TASH_MODE=$TEMP_TASH_MODE
 
         contents=$(cat "$temp")
         rm -f "$temp"
@@ -581,6 +585,8 @@ item "external"
         emit
 		temp=$(tash__mk_temp)
 
+		TEMP_TASH_MODE=$TASH_MODE
+		TASH_MODE="run"
 		{
             TEMP_TASH_COUNT_FAILED=$TASH_COUNT_FAILED
 			item "should_fail"
@@ -589,6 +595,7 @@ item "external"
 			TASH_COUNT_FAILED=$TEMP_TASH_COUNT_FAILED # We could go and assert here that it hasn't increased by one, but the
 													  # emit tests already test that.
 		} 2> "$temp"
+		TASH_MODE=$TEMP_TASH_MODE
 
 		contents=$(cat "$temp")
 		rm -f "$temp"
@@ -631,6 +638,8 @@ item "external"
 			val=$3
 			expected=$4
 			TEMP_TASH_COUNT_SUCCEEDED=$TASH_COUNT_SUCCEEDED
+			TEMP_TASH_MODE=$TASH_MODE
+			TASH_MODE="run"
 			temp=$(tash__mk_temp)
 			{
 				item "should_be_ok"
@@ -640,6 +649,7 @@ item "external"
 					assert my_value "$op" "$expected"
 				emit
 			} >"$temp"
+			TASH_MODE=$TEMP_TASH_MODE
 			TASH_COUNT_SUCCEEDED=$TEMP_TASH_COUNT_SUCCEEDED
 			contents=$(cat "$temp")
 			rm -f "$temp"
@@ -759,10 +769,10 @@ item "external"
 			assert stderr contains "expected exactly one argument (string)"
             check 13 ""
 		emit
-		
+
 		run printf "item1\nitem2"
 		check 0 "$(tash_fmt "item1\nitem2")"
-	
+
 	emit
 	item "tash_print"
 		item "argument_count"
@@ -773,7 +783,7 @@ item "external"
             check 14 ""
 		emit
 
-		item "test"	
+		item "test"
 			value "hello!"
 		emit
 
@@ -790,7 +800,7 @@ item "external"
 	emit
 
 	item "tash_init"
-		item "argument_count_inspect"	
+		item "argument_count_inspect"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_init --inspect'
             assert stderr contains "terminated"
             assert stderr contains "E016"
@@ -820,14 +830,14 @@ item "external"
 			TEMP_TASH_MODE=$TASH_MODE
 			TEMP_TASH_INSPECTING_TEST=$TASH_INSPECTING_TEST
 			tash_init --inspect "tests::a_test"
-			
+
 			if [ "$TASH_MODE" != "inspect" ]; then
 				fail "expected tash_init --inspect to set TASH_MODE to inspect, but got: $TASH_MODE"
 			fi
 			if [ "$TASH_INSPECTING_TEST" != "tests::a_test" ]; then
 				fail "expected tash_init --inspect to set TASH_INSPECTING_TEST to tests::a_test, but got: $TASH_INSPECTING_TEST"
 			fi
-			
+
 			TASH_MODE=$TEMP_TASH_MODE
 			TASH_INSPECTING_TEST=$TEMP_TASH_INSPECTING_TEST
 			item "make_me_a_test"
@@ -838,7 +848,7 @@ item "external"
 		item "version"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_init -V'
 			assert stdout contains "run sh -h | --help for help"
-			check 0 "v" 
+			check 0 "v"
 		emit
 		item "help"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; tash_init -h'
@@ -848,7 +858,7 @@ item "external"
 			assert stdout contains "Usage:"
 			assert stdout contains "Options:"
 			# ...
-			check 0 
+			check 0
 		emit
 	emit
 	item "tash_end"
@@ -860,7 +870,7 @@ item "external"
             check 18 ""
 		emit
 
-		item "invalid_scope"	
+		item "invalid_scope"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; item "scope"; tash_end'
             assert stderr contains "terminated"
             assert stderr contains "E017"
@@ -872,75 +882,84 @@ item "external"
 			temp=$(tash__mk_temp)
 			TEMP_TASH_COUNT_FAILED=$TASH_COUNT_FAILED
 			TEMP_TASH_SCOPE=$TASH_SCOPE
+			TEMP_TASH_MODE=$TASH_MODE
 			TASH_COUNT_FAILED=1
 			TASH_SCOPE="tests"
+			TASH_MODE="run"
 			(
 				tash_end
 			) >"$temp"
 			contents=$(cat "$temp")
 			rm -f "$temp"
-			TASH_SCOPE="$TEMP_TASH_SCOPE"
+			TASH_SCOPE=$TEMP_TASH_SCOPE
+			TASH_MODE=$TEMP_TASH_MODE
 			TASH_COUNT_FAILED=$TEMP_TASH_COUNT_FAILED
 			case "$contents" in
 			*"1 failed"*) ;;
 			*) fail "expected tash_end to print a result message with 1 failure, but got: $contents" ;;
 			esac
-			
+
 			item "make_me_a_test"
 				value 0
-			emit	
+			emit
 			assert make_me_a_test -eq 0
 		emit
 		item "test_succeeded"
 			temp=$(tash__mk_temp)
 			TEMP_TASH_COUNT_SUCCEEDED=$TASH_COUNT_SUCCEEDED
 			TEMP_TASH_SCOPE=$TASH_SCOPE
+			TEMP_TASH_MODE=$TASH_MODE
 			TASH_COUNT_SUCCEEDED=1
 			TASH_SCOPE="tests"
+			TASH_MODE="run"
 			(
 				tash_end
 			) >"$temp"
 			contents=$(cat "$temp")
 			rm -f "$temp"
-			TASH_SCOPE="$TEMP_TASH_SCOPE"
+			TASH_SCOPE=$TEMP_TASH_SCOPE
+			TASH_MODE=$TEMP_TASH_MODE
 			TASH_COUNT_SUCCEEDED=$TEMP_TASH_COUNT_SUCCEEDED
 			case "$contents" in
 			*"1 succeeded"*) ;;
 			*) fail "expected tash_end to print a result message with 1 succeeded, but got: $contents" ;;
 			esac
-			
+
 			item "make_me_a_test"
 				value 0
-			emit	
+			emit
 			assert make_me_a_test -eq 0
 		emit
 		item "test_ignored"
 			temp=$(tash__mk_temp)
 			TEMP_TASH_COUNT_IGNORED=$TASH_COUNT_IGNORED
 			TEMP_TASH_SCOPE=$TASH_SCOPE
+			TEMP_TASH_MODE=$TASH_MODE
 			TASH_COUNT_IGNORED=1
 			TASH_SCOPE="tests"
+			TASH_MODE="run"
 			(
 				tash_end
 			) >"$temp"
 			contents=$(cat "$temp")
 			rm -f "$temp"
-			TASH_SCOPE="$TEMP_TASH_SCOPE"
+			TASH_SCOPE=$TEMP_TASH_SCOPE
+			TASH_MODE=$TEMP_TASH_MODE
 			TASH_COUNT_IGNORED=$TEMP_TASH_COUNT_IGNORED
 			case "$contents" in
 			*"1 ignored"*) ;;
 			*) fail "expected tash_end to print a result message with 1 ignored, but got: $contents" ;;
 			esac
-			
+
 			item "make_me_a_test"
 				value 0
-			emit	
+			emit
 			assert make_me_a_test -eq 0
 		emit
 	emit
 emit
 
-if tash__should_log; then
+if [ "$TASH_MODE" = "run" ]; then
 	if [ $TASH_COUNT_FAILED -eq 0 ] && tash__should_log;  then
 		printf "${TASH_BOLD_WHITE}[🎉]${TASH_COLOR_RESET} tash ${TASH_BOLD_GREEN}FINISHED${TASH_COLOR_RESET} external tests without ${TASH_BOLD_WHITE}any errors!${TASH_COLOR_RESET}\n"
 	else

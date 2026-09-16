@@ -226,6 +226,27 @@ tash__window() {
 	printf "${TASH_LIGHT}%s${TASH_COLOR_RESET}\n" "$TASH__bottom"
 }
 
+# Appends a line to TASH_OUTPUT_STREAM. Useful for TAP
+tash__stream_add() {
+	if [ -z "$TASH_OUTPUT_STREAM" ]; then
+		TASH_OUTPUT_STREAM=$1
+	else
+		TASH_OUTPUT_STREAM="${TASH_OUTPUT_STREAM}
+$1"
+	fi
+}
+
+# Splits a diagnostic message into comments line(s) for TAP
+tash__tap_diagnostic() {
+	TASH__old_ifs=$IFS
+	IFS="
+"
+	for TASH__line in $1; do
+		tash__stream_add "# ${TASH__line}"
+	done
+	IFS=$TASH__old_ifs
+}
+
 # We use a var type of registry because this is POSIX compliant, we can't use
 # Bash arrays or anything similar.
 
@@ -282,13 +303,7 @@ tash__error() {
 	tash__log "err" "$TASH_BOLD_RED" "$*" 1
 }
 tash__results() {
-	# Needed because I use tash__results with color, and otherwise it would just
-	# print the ANSI escape codes directly, which is not what we want.
-	# You could do that for each of the tash log funcs, for consistensy, but thats
-	# really not what we want because it is worse performance wise (forking a subshell takes time)
-
-	# Feel free to add them, or change anything if you found a better way.
-	tash__log "results" "$TASH_BOLD_YELLOW" "$(tash_fmt "$*")"
+	tash__log "results" "$TASH_BOLD_YELLOW" "$*"
 }
 tash__hint() {
 	tash__log "hint" "$TASH_BOLD_YELLOW" "$*"
@@ -406,7 +421,9 @@ emit() {
 					TASH_FAILED_TESTS="$TASH_FAILED_TESTS $TASH_SCOPE"
 					tash__get "${TASH_SCOPE}::__failmessage"
 					if [ "$TASH_MODE" = "tap" ]; then
-						TASH_OUTPUT_STREAM="${TASH_OUTPUT_STREAM}\nnot ok ${TASH_TOTAL_TEST_COUNT} - ${TASH__gv}"
+						TASH_TAP_SEQ=$((TASH_TAP_SEQ + 1))
+						tash__stream_add "not ok ${TASH_TAP_SEQ} - ${TASH_SCOPE}"
+						tash__tap_diagnostic "$TASH__gv"
 					else
 						tash__failure "$TASH__gv"
 					fi
@@ -414,7 +431,8 @@ emit() {
 				else
 					TASH_COUNT_SUCCEEDED=$((TASH_COUNT_SUCCEEDED + 1))
 					if [ "$TASH_MODE" = "tap" ]; then
-						TASH_OUTPUT_STREAM="${TASH_OUTPUT_STREAM}\nok ${TASH_TOTAL_TEST_COUNT} - ${TASH_SCOPE} succeeded!"
+						TASH_TAP_SEQ=$((TASH_TAP_SEQ + 1))
+						tash__stream_add "ok ${TASH_TAP_SEQ} - ${TASH_SCOPE}"
 					else
 						tash__success "$TASH_SCOPE succeeded!"
 					fi
@@ -514,7 +532,7 @@ TASH_FAILED_TESTS=""
 TASH_COUNT_SUCCEEDED=0
 TASH_COUNT_FAILED=0
 TASH_COUNT_IGNORED=0
-TASH_TOTAL_TEST_COUNT=0
+TASH_TAP_SEQ=0
 fail() {
 	if [ $# -lt 1 ]; then
 		tash__error "fail: expected atleast one argument (reason)"
@@ -531,7 +549,6 @@ fail() {
 	*" $TASH_SCOPE "*) ;;
 	*)
 		TASH_TESTS="$TASH_TESTS $TASH_SCOPE"
-		TASH_TOTAL_TEST_COUNT=$((TASH_TOTAL_TEST_COUNT + 1))
 		;;
 	esac
 
@@ -589,7 +606,6 @@ assert() {
 	*" $TASH_SCOPE "*) ;;
 	*)
 		TASH_TESTS="$TASH_TESTS $TASH_SCOPE"
-		TASH_TOTAL_TEST_COUNT=$((TASH_TOTAL_TEST_COUNT + 1))
 		;;
 	esac
 
@@ -812,7 +828,7 @@ tash_end() {
 
 	TASH_END=$(date +%s)
 	TASH__elapsed=$((TASH_END - TASH_START))
-	[ "$TASH_MODE" != "tap" ] && tash__results "${TASH_BOLD_GREEN}${TASH_COUNT_SUCCEEDED} succeeded${TASH_COLOR_RESET}, ${TASH_BOLD_RED}${TASH_COUNT_FAILED} failed${TASH_COLOR_RESET}, ${TASH_LIGHT}${TASH_COUNT_IGNORED} ignored${TASH_COLOR_RESET} (took ${TASH__elapsed}s)"
+	[ "$TASH_MODE" != "tap" ] && tash__results "$(tash_fmt "${TASH_BOLD_GREEN}${TASH_COUNT_SUCCEEDED} succeeded${TASH_COLOR_RESET}, ${TASH_BOLD_RED}${TASH_COUNT_FAILED} failed${TASH_COLOR_RESET}, ${TASH_LIGHT}${TASH_COUNT_IGNORED} ignored${TASH_COLOR_RESET} (took ${TASH__elapsed}s)")"
 
 	if [ "$TASH_MODE" = "inspect" ]; then
 		for TASH__path in $TASH_ITEM_PATHS; do
@@ -826,7 +842,7 @@ tash_end() {
 			fi
 		done
 
-	else
+	elif [ "$TASH_TAP" != "tap" ]; then
 		for TASH__path in $TASH_FAILED_TESTS; do
 			tash__get "${TASH__path}::__failscope"
 			TASH__run_scope=$TASH__gv
@@ -844,7 +860,11 @@ tash_end() {
 	fi
 
 	if [ "$TASH_MODE" = "tap" ]; then
-		printf "%s\n" "$(tash_fmt "$TASH_OUTPUT_STREAM")"
+		printf "TAP version 13\n"
+		printf "1..%d\n" "$TASH_TAP_SEQ"
+		if [ -n "$TASH_OUTPUT_STREAM" ]; then
+			printf "%s\n" "$TASH_OUTPUT_STREAM"
+		fi
 	fi
 
 	if [ "$TASH_COUNT_FAILED" -gt 0 ]; then
