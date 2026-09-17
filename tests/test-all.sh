@@ -21,7 +21,7 @@ run_under() {
 		return
 	fi
 	doing "running under $*"
-	if "$@" "$SCRIPT_DIR/tash-tests.sh" "$ARGS"; then
+	if "$@" "$SCRIPT_DIR/tash-tests.sh" $ARGS; then
 		ok "$* passed"
 	else
 		fail "$* failed! ($?)"

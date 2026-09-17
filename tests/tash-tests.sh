@@ -204,6 +204,40 @@ item "internal"
 		assert -z stderr
 		check 0
 	emit
+	item "tash__stream_add"
+		TEMP_TASH_OUTPUT_STREAM=$TASH_OUTPUT_STREAM
+		TASH_OUTPUT_STREAM=""
+		run tash__stream_add "test"
+		if [ "$TASH_OUTPUT_STREAM" != "test" ]; then
+			fail "expected tash__stream_add to add test to TASH_OUTPUT_STREAM, but got: $TASH_OUTPUT_STREAM"
+		fi
+		run tash__stream_add "test2"
+		if [ "$TASH_OUTPUT_STREAM" != "$(tash_fmt "test\ntest2")" ]; then
+			fail "expected tash__stream_add to add test2 to TASH_OUTPUT_STREAM, but got: $TASH_OUTPUT_STREAM"
+		fi
+		item "make_me_a_test"
+			value 0
+		emit
+		assert "make_me_a_test" -eq 0
+		TASH_OUTPUT_STREAM=$TEMP_TASH_OUTPUT_STREAM
+	emit
+	item "tash__tap_comment"
+		TEMP_TASH_OUTPUT_STREAM=$TASH_OUTPUT_STREAM
+		TASH_OUTPUT_STREAM=""
+		run tash__tap_comment "test"
+		if [ "$TASH_OUTPUT_STREAM" != "# test" ]; then
+			fail "expected tash__tap_comment to add '# test' to TASH_OUTPUT_STREAM, but got: $TASH_OUTPUT_STREAM"
+		fi
+		run tash__tap_comment "test2"
+		if [ "$TASH_OUTPUT_STREAM" != "$(tash_fmt "# test\n# test2")" ]; then
+			fail "expected tash__tap_comment to add '# test2' to TASH_OUTPUT_STREAM, but got: $TASH_OUTPUT_STREAM"
+		fi
+		item "make_me_a_test"
+			value 0
+		emit
+		assert "make_me_a_test" -eq 0
+		TASH_OUTPUT_STREAM=$TEMP_TASH_OUTPUT_STREAM
+	emit
 	item "tash__var_name"
 		# We have no reliable way of checking here, because
 		# run itself uses tash__var_name before we can check. This is one of
@@ -517,7 +551,7 @@ item "external"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; run'
             assert stderr contains "terminated"
             assert stderr contains "E006"
-            assert stderr contains "expected atleast one argument (command...)"
+            assert stderr contains "expected at least one argument (command...)"
             check 6 ""
         emit
         # We cannot do run run echo "something" here, because run itself
@@ -573,7 +607,7 @@ item "external"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; fail'
             assert stderr contains "terminated"
             assert stderr contains "E007"
-			assert stderr contains "expected atleast one argument (reason)"
+			assert stderr contains "expected at least one argument (reason)"
             check 7 ""
         emit
         item "invalid_scope"
@@ -615,7 +649,7 @@ item "external"
 		    run sh -c '. "'"$SCRIPT_DIR"'/../src/tash.sh"; assert'
             assert stderr contains "terminated"
             assert stderr contains "E009"
-			assert stderr contains "expected atleast two arguments (item, operator, [expected])"
+			assert stderr contains "expected at least two arguments (item, operator, [expected])"
             check 9 ""
         emit
         item "invalid_scope"

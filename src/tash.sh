@@ -236,8 +236,8 @@ $1"
 	fi
 }
 
-# Splits a diagnostic message into comments line(s) for TAP
-tash__tap_diagnostic() {
+# Splits a message into comments line(s) for TAP
+tash__tap_comment() {
 	TASH__old_ifs=$IFS
 	IFS="
 "
@@ -423,7 +423,7 @@ emit() {
 					if [ "$TASH_MODE" = "tap" ]; then
 						TASH_TAP_SEQ=$((TASH_TAP_SEQ + 1))
 						tash__stream_add "not ok ${TASH_TAP_SEQ} - ${TASH_SCOPE}"
-						tash__tap_diagnostic "$TASH__gv"
+						tash__tap_comment "$TASH__gv"
 					else
 						tash__failure "$TASH__gv"
 					fi
@@ -482,7 +482,7 @@ TASH_TMP_STDOUT=""
 TASH_TMP_STDERR=""
 run() {
 	if [ $# -eq 0 ]; then
-		tash__error "run: expected atleast one argument (command...)"
+		tash__error "run: expected at least one argument (command...)"
 		tash__terminate "$TASH_E_RUN_ARGUMENT_COUNT"
 	fi
 
@@ -535,7 +535,7 @@ TASH_COUNT_IGNORED=0
 TASH_TAP_SEQ=0
 fail() {
 	if [ $# -lt 1 ]; then
-		tash__error "fail: expected atleast one argument (reason)"
+		tash__error "fail: expected at least one argument (reason)"
 		tash__terminate "$TASH_E_FAIL_ARGUMENT_COUNT"
 	fi
 
@@ -592,7 +592,7 @@ fail() {
 # ```
 assert() {
 	if [ $# -lt 2 ]; then
-		tash__error "assert: expected atleast two arguments (item, operator, [expected])"
+		tash__error "assert: expected at least two arguments (item, operator, [expected])"
 		tash__terminate "$TASH_E_ASSERT_ARGUMENT_COUNT"
 	fi
 

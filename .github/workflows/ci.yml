@@ -11,19 +11,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shell: [bash, dash, ksh, mksh, zsh, busybox]
+        shell: [bash, dash, ksh, mksh, zsh, yash, busybox]
     steps:
       - uses: actions/checkout@v4
 
       - name: Install shells
         run: |
           sudo apt-get update
-          sudo apt-get install -y dash ksh mksh zsh busybox
+          sudo apt-get install -y dash ksh mksh zsh yash busybox
 
       - name: Run Tash (${{ matrix.shell }})
         run: |
           if [ "${{ matrix.shell }}" = "busybox" ]; then
-            prove --exec 'busybox ash' -v tests/tash-tests.sh :: --tap
+            busybox ash tests/tash-tests.sh
           else
-            prove --exec "${{ matrix.shell }}" -v tests/tash-tests.sh :: --tap
+            "${{ matrix.shell }}" tests/tash-tests.sh
           fi
